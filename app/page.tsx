@@ -5,7 +5,13 @@ const CATEGORY_COLORS: Record<string, string> = {
   Music:    "bg-purple-500/20 text-purple-300 border border-purple-500/30",
   Tech:     "bg-blue-500/20 text-blue-300 border border-blue-500/30",
   Business: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30",
+  Sports:   "bg-green-500/20 text-green-300 border border-green-500/30",
+  Comedy:   "bg-orange-500/20 text-orange-300 border border-orange-500/30",
+  Food:     "bg-pink-500/20 text-pink-300 border border-pink-500/30",
 };
+
+const FILTER_ACTIVE = "bg-blue-600 text-white";
+const FILTER_INACTIVE = "bg-white/10 text-gray-300 hover:bg-white/20";
 
 function getCountdown(dateStr: string): string {
   const eventDate = new Date(dateStr);
@@ -18,6 +24,88 @@ function getCountdown(dateStr: string): string {
   return `${diff} days away`;
 }
 
+const ALL_EVENTS = [
+  {
+    title: "DJ Night",
+    artist: "Martin Garrix",
+    price: "€50",
+    seats: 20,
+    maxSeats: 20,
+    date: "Apr 12, 2026",
+    time: "10:00 PM",
+    location: "O2 Arena, London",
+    category: "Music",
+  },
+  {
+    title: "Live Band",
+    artist: "Coldplay Tribute",
+    price: "€70",
+    seats: 12,
+    maxSeats: 12,
+    date: "Apr 18, 2026",
+    time: "8:00 PM",
+    location: "Royal Albert Hall, London",
+    category: "Music",
+  },
+  {
+    title: "AI Talk",
+    artist: "Elon Musk",
+    price: "Free",
+    seats: 50,
+    maxSeats: 50,
+    date: "Apr 25, 2026",
+    time: "3:00 PM",
+    location: "Convention Center, SF",
+    category: "Tech",
+  },
+  {
+    title: "Startup Pitch",
+    artist: "YC Founders",
+    price: "€20",
+    seats: 8,
+    maxSeats: 30,
+    date: "May 2, 2026",
+    time: "6:00 PM",
+    location: "YC HQ, Mountain View",
+    category: "Business",
+  },
+  {
+    title: "Boxing Night",
+    artist: "Anthony Joshua vs. Fury",
+    price: "€120",
+    seats: 35,
+    maxSeats: 35,
+    date: "May 10, 2026",
+    time: "9:00 PM",
+    location: "Madison Square Garden, NY",
+    category: "Sports",
+  },
+  {
+    title: "Stand-Up Night",
+    artist: "Kevin Hart",
+    price: "€45",
+    seats: 18,
+    maxSeats: 40,
+    date: "May 15, 2026",
+    time: "7:30 PM",
+    location: "Comedy Cellar, NYC",
+    category: "Comedy",
+  },
+  {
+    title: "Food Festival",
+    artist: "Top Chefs of Europe",
+    price: "€30",
+    seats: 60,
+    maxSeats: 60,
+    date: "May 22, 2026",
+    time: "12:00 PM",
+    location: "Riverside Park, Dublin",
+    category: "Food",
+  },
+];
+
+const CATEGORIES = ["All", ...Array.from(new Set(ALL_EVENTS.map((e) => e.category)))];
+
 export default function Home() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -25,53 +113,13 @@ export default function Home() {
   const [selectedEvent, setSelectedEvent] = useState("");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [animatingEvent, setAnimatingEvent] = useState("");
+  const [activeFilter, setActiveFilter] = useState("All");
 
-  const [events, setEvents] = useState([
-    {
-      title: "DJ Night",
-      artist: "Martin Garrix",
-      price: "€50",
-      seats: 20,
-      maxSeats: 20,
-      date: "Apr 12, 2026",
-      time: "10:00 PM",
-      location: "O2 Arena, London",
-      category: "Music",
-    },
-    {
-      title: "Live Band",
-      artist: "Coldplay Tribute",
-      price: "€70",
-      seats: 12,
-      maxSeats: 12,
-      date: "Apr 18, 2026",
-      time: "8:00 PM",
-      location: "Royal Albert Hall, London",
-      category: "Music",
-    },
-    {
-      title: "AI Talk",
-      artist: "Elon Musk",
-      price: "Free",
-      seats: 50,
-      maxSeats: 50,
-      date: "Apr 25, 2026",
-      time: "3:00 PM",
-      location: "Convention Center, SF",
-      category: "Tech",
-    },
-    {
-      title: "Startup Pitch",
-      artist: "YC Founders",
-      price: "€20",
-      seats: 8,
-      maxSeats: 30,
-      date: "May 2, 2026",
-      time: "6:00 PM",
-      location: "YC HQ, Mountain View",
-      category: "Business",
-    },
-  ]);
+  const [events, setEvents] = useState(ALL_EVENTS);
+
+  const filteredEvents = activeFilter === "All"
+    ? events
+    : events.filter((e) => e.category === activeFilter);
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -131,7 +179,8 @@ export default function Home() {
         🎟️ RESERVA
       </h1>
 
-      <div className="max-w-xl mx-auto mb-12">
+      {/* User Input */}
+      <div className="max-w-xl mx-auto mb-10">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -152,8 +201,23 @@ export default function Home() {
         </button>
       </div>
 
+      {/* Category Filter Bar */}
+      <div className="flex flex-wrap justify-center gap-2 max-w-3xl mx-auto mb-8">
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setActiveFilter(cat)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200
+              ${activeFilter === cat ? FILTER_ACTIVE : FILTER_INACTIVE}`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Event Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-        {events.map((event, index) => (
+        {filteredEvents.map((event, index) => (
           <div
             key={index}
             className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl shadow-lg

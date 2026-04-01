@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -59,8 +59,10 @@ export default function Home() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [animatingEvent, setAnimatingEvent] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
+  const [search, setSearch] = useState("");
   const [events, setEvents] = useState<Event[]>([]);
   const [bookingCounts, setBookingCounts] = useState<Record<number, number>>({});
+  const eventsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchEvents() {
@@ -106,9 +108,13 @@ export default function Home() {
     fetchEvents();
   }, []);
 
-  const filteredEvents = activeFilter === "All"
-    ? events
-    : events.filter((e) => e.category === activeFilter);
+  const filteredEvents = events
+    .filter((e) => activeFilter === "All" || e.category === activeFilter)
+    .filter((e) =>
+      search === "" ||
+      e.title.toLowerCase().includes(search.toLowerCase()) ||
+      e.artist.toLowerCase().includes(search.toLowerCase())
+    );
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -240,35 +246,72 @@ export default function Home() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Your Email"
-          className="w-full p-3 mb-4 rounded-lg bg-white/10 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full p-3 mb-4 rounded-lg bg-white/10 border focus:outline-none focus:ring-2
+            ${email && !isValidEmail(email)
+              ? "border-red-500 focus:ring-red-500"
+              : "border-gray-700 focus:ring-blue-500"}`}
         />
+        {email && !isValidEmail(email) && (
+          <p className="text-red-400 text-xs -mt-3 mb-3 pl-1">Please enter a valid email address</p>
+        )}
+        <div className="relative mb-4">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="🔍 Search events or artists..."
+            className="w-full p-3 rounded-lg bg-white/10 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+            >
+              ✕
+            </button>
+          )}
+        </div>
         <button
           disabled={loading}
+          onClick={() => eventsRef.current?.scrollIntoView({ behavior: "smooth" })}
           className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all duration-200 py-3 rounded-lg font-semibold"
         >
-          {loading ? "Processing..." : "Select Event Below"}
+          {loading ? "Processing..." : "Select Event Below ↓"}
         </button>
       </div>
 
       {/* Category Filter Bar */}
       <div className="flex flex-wrap justify-center gap-2 max-w-3xl mx-auto mb-8">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveFilter(cat)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200
-              ${activeFilter === cat ? FILTER_ACTIVE : FILTER_INACTIVE}`}
-          >
-            {cat}
-          </button>
-        ))}
+        {CATEGORIES.map((cat) => {
+          const count = cat === "All" ? events.length : events.filter((e) => e.category === cat).length;
+          return (
+            <button
+              key={cat}
+              onClick={() => setActiveFilter(cat)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200
+                ${activeFilter === cat ? FILTER_ACTIVE : FILTER_INACTIVE}`}
+            >
+              {cat} <span className="opacity-60 text-xs">({count})</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Event Grid */}
       {pageLoading ? (
         <p className="text-center text-gray-400 mt-20">Loading events...</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+        <>
+          {filteredEvents.length === 0 && (
+            <div className="text-center mt-16">
+              <p className="text-4xl mb-3">🔍</p>
+              <p className="text-white font-semibold text-lg">No events found</p>
+              <p className="text-gray-400 text-sm mt-1">Try a different search or category</p>
+              <button onClick={() => { setSearch(""); setActiveFilter("All"); }} className="mt-4 text-blue-400 hover:text-blue-300 text-sm underline">
+                Clear filters
+              </button>
+            </div>
+          )}
+          <div ref={eventsRef} className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
           {filteredEvents.map((event, index) => (
             <div
               key={event.id}
@@ -369,6 +412,7 @@ export default function Home() {
             </div>
           ))}
         </div>
+        </>
       )}
     </div>
   );

@@ -49,6 +49,7 @@ export default function Home() {
   const [animatingEvent, setAnimatingEvent] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [events, setEvents] = useState<Event[]>([]);
+  const [bookingCounts, setBookingCounts] = useState<Record<number, number>>({});
 
   useEffect(() => {
     async function fetchEvents() {
@@ -75,6 +76,19 @@ export default function Home() {
           }))
         );
       }
+      // Fetch booking counts per event
+      const { data: bookings } = await supabase
+        .from("bookings")
+        .select("event_id");
+
+      if (bookings) {
+        const counts: Record<number, number> = {};
+        bookings.forEach((b) => {
+          counts[b.event_id] = (counts[b.event_id] || 0) + 1;
+        });
+        setBookingCounts(counts);
+      }
+
       setPageLoading(false);
     }
 
@@ -114,6 +128,20 @@ export default function Home() {
         .eq("id", eventId);
 
       if (error) throw error;
+
+      // Save booking record to Supabase
+      await supabase.from("bookings").insert({
+        event_id: eventId,
+        event_title: eventTitle,
+        attendee_name: name,
+        attendee_email: email,
+      });
+
+      // Update local booking count
+      setBookingCounts((prev) => ({
+        ...prev,
+        [eventId]: (prev[eventId] || 0) + 1,
+      }));
 
       // Send confirmation email
       await fetch("/api/send", {
@@ -232,7 +260,10 @@ export default function Home() {
               <p className="text-gray-400 text-sm mb-1">📍 {event.location}</p>
               <p className="text-gray-400 text-sm mb-1">📅 {event.date} &nbsp; 🕐 {event.time}</p>
 
-              <p className="text-blue-300 text-xs mb-3 font-medium">⏳ {getCountdown(event.date)}</p>
+              <p className="text-blue-300 text-xs mb-1 font-medium">⏳ {getCountdown(event.date)}</p>
+              {(bookingCounts[event.id] || 0) > 0 && (
+                <p className="text-gray-400 text-xs mb-3">🎟 {bookingCounts[event.id]} booked</p>
+              )}
 
               <p className="mb-2 font-semibold">{event.price}</p>
 

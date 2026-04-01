@@ -140,6 +140,7 @@ export default function Home() {
   const [bookingCounts, setBookingCounts] = useState<Record<number, number>>({});
   const [viewingCounts, setViewingCounts] = useState<Record<number, number>>({});
   const [lastBooked, setLastBooked] = useState<Record<number, number>>({});
+  const [bookedEventIds, setBookedEventIds] = useState<Set<number>>(new Set());
   const [confirmedBooking, setConfirmedBooking] = useState<{
     title: string; artist: string; location: string;
     date: string; time: string; price: string; ref: string;
@@ -216,6 +217,7 @@ export default function Home() {
   ) => {
     if (!name || !email) { showToast("Please enter name & email first", "error"); return; }
     if (!isValidEmail(email)) { showToast("Please enter a valid email address", "error"); return; }
+    if (bookedEventIds.has(eventId)) { showToast("You've already booked this event!", "error"); return; }
 
     setLoading(true);
     try {
@@ -244,6 +246,7 @@ export default function Home() {
       launchConfetti();
       showToast(`🎉 Booked for ${eventTitle}!`, "success");
       setSelectedEvent(eventTitle);
+      setBookedEventIds((prev) => new Set(prev).add(eventId));
       setConfirmedBooking({ title: eventTitle, artist, location: eventLocation, date: eventDate, time: eventTime, price: eventPrice, ref: bookingRef });
     } catch (err) {
       console.error(err);
@@ -479,10 +482,14 @@ export default function Home() {
 
                   <button
                     onClick={() => handleBooking(event.id, event.title, event.date, event.time, event.location, event.price, event.seats)}
-                    disabled={loading || event.seats === 0}
+                    disabled={loading || event.seats === 0 || bookedEventIds.has(event.id)}
                     className={`w-full py-2 rounded-lg transition-all duration-200 font-medium active:scale-95
-                    ${selectedEvent === event.title ? "bg-green-600" : event.seats === 0 ? "bg-gray-700 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}>
-                    {event.seats === 0 ? "Sold Out" : selectedEvent === event.title ? "Booked ✔" : loading ? "Booking..." : "Book Now"}
+                    ${bookedEventIds.has(event.id) ? "bg-green-700 cursor-not-allowed"
+                      : event.seats === 0 ? "bg-gray-700 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700"}`}>
+                    {event.seats === 0 ? "Sold Out"
+                      : bookedEventIds.has(event.id) ? "Already Booked ✓"
+                      : loading ? "Booking..." : "Book Now"}
                   </button>
                 </div>
               </div>
@@ -490,6 +497,15 @@ export default function Home() {
           </div>
         </>
       )}
+
+      {/* Footer */}
+      <div className="text-center mt-20 pb-6 border-t border-white/5 pt-8">
+        <p style={{ background: "linear-gradient(to right, #60a5fa, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", display: "inline-block", fontWeight: 700 }}>
+          🎟️ RESERVA
+        </p>
+        <p className="text-gray-600 text-xs mt-1">© 2026 RESERVA · All rights reserved</p>
+      </div>
+
     </div>
   );
 }

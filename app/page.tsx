@@ -9,11 +9,22 @@ const CATEGORY_COLORS: Record<string, string> = {
   Sports:   "bg-green-500/20 text-green-300 border border-green-500/30",
   Comedy:   "bg-orange-500/20 text-orange-300 border border-orange-500/30",
   Food:     "bg-pink-500/20 text-pink-300 border border-pink-500/30",
+  AI:       "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30",
+};
+
+const CATEGORY_ACCENT: Record<string, string> = {
+  Music:    "#a855f7",
+  Tech:     "#3b82f6",
+  Business: "#eab308",
+  Sports:   "#22c55e",
+  Comedy:   "#f97316",
+  Food:     "#ec4899",
+  AI:       "#06b6d4",
 };
 
 const FILTER_ACTIVE   = "bg-blue-600 text-white";
 const FILTER_INACTIVE = "bg-white/10 text-gray-300 hover:bg-white/20";
-const CATEGORIES      = ["All", "Music", "Tech", "Business", "Sports", "Comedy", "Food"];
+const CATEGORIES      = ["All", "Music", "Tech", "Business", "Sports", "Comedy", "Food", "AI"];
 
 function getCountdown(dateStr: string): string {
   const eventDate = new Date(dateStr);
@@ -76,7 +87,7 @@ export default function Home() {
           }))
         );
       }
-      // Fetch booking counts per event
+
       const { data: bookings } = await supabase
         .from("bookings")
         .select("event_id");
@@ -121,7 +132,6 @@ export default function Home() {
     setLoading(true);
 
     try {
-      // Decrement seats in Supabase
       const { error } = await supabase
         .from("events")
         .update({ seats: currentSeats - 1 })
@@ -129,7 +139,6 @@ export default function Home() {
 
       if (error) throw error;
 
-      // Save booking record to Supabase
       await supabase.from("bookings").insert({
         event_id: eventId,
         event_title: eventTitle,
@@ -137,13 +146,11 @@ export default function Home() {
         attendee_email: email,
       });
 
-      // Update local booking count
       setBookingCounts((prev) => ({
         ...prev,
         [eventId]: (prev[eventId] || 0) + 1,
       }));
 
-      // Send confirmation email
       await fetch("/api/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -158,7 +165,6 @@ export default function Home() {
         }),
       });
 
-      // Update local state to reflect new seat count
       setAnimatingEvent(eventTitle);
       setTimeout(() => setAnimatingEvent(""), 500);
 
@@ -179,9 +185,22 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-blue-900 text-white p-8">
+    <div className="relative min-h-screen text-white p-8 overflow-hidden" style={{ background: "#06060f" }}>
 
-      {/* Toast Notification */}
+      {/* Animated background orbs */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="orb-1 absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full" style={{ background: "#7c3aed", filter: "blur(130px)" }} />
+        <div className="orb-2 absolute top-1/2 -right-40 w-[420px] h-[420px] rounded-full" style={{ background: "#1d4ed8", filter: "blur(130px)" }} />
+        <div className="orb-3 absolute -bottom-40 left-1/3 w-[480px] h-[480px] rounded-full" style={{ background: "#be185d", filter: "blur(150px)" }} />
+        <div className="orb-4 absolute top-1/4 left-1/2 w-[300px] h-[300px] rounded-full" style={{ background: "#0e7490", filter: "blur(120px)" }} />
+        {/* Subtle grid overlay */}
+        <div className="absolute inset-0" style={{
+          backgroundImage: "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+          backgroundSize: "60px 60px"
+        }} />
+      </div>
+
+      {/* Toast */}
       {toast && (
         <div
           className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl shadow-2xl text-white font-medium animate-slide-in
@@ -191,9 +210,16 @@ export default function Home() {
         </div>
       )}
 
-      <h1 className="text-4xl font-extrabold text-center mb-10 tracking-wide">
-        🎟️ RESERVA
-      </h1>
+      {/* Hero */}
+      <div className="text-center mb-10">
+        <h1
+          className="text-5xl font-extrabold tracking-wide mb-2"
+          style={{ background: "linear-gradient(to right, #60a5fa, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+        >
+          🎟️ RESERVA
+        </h1>
+        <p className="text-gray-400 text-sm tracking-widest uppercase">Discover & Book Unforgettable Experiences</p>
+      </div>
 
       {/* User Input */}
       <div className="max-w-xl mx-auto mb-10">
@@ -239,12 +265,17 @@ export default function Home() {
           {filteredEvents.map((event, index) => (
             <div
               key={event.id}
-              className={`bg-white/5 backdrop-blur-lg p-6 rounded-2xl shadow-lg
-              hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/30
-              transition-all duration-300 cursor-pointer border border-transparent hover:border-blue-500
+              className={`backdrop-blur-lg p-6 rounded-2xl shadow-lg
+              hover:scale-105 hover:shadow-2xl
+              transition-all duration-300 cursor-pointer border border-white/10
               animate-card-enter
+              ${event.seats === 0 ? "opacity-50 grayscale" : "hover:border-white/30"}
               ${selectedEvent === event.title ? "animate-booked-glow" : ""}`}
-              style={{ animationDelay: `${index * 80}ms` }}
+              style={{
+                animationDelay: `${index * 80}ms`,
+                background: "rgba(255,255,255,0.04)",
+                borderTop: `3px solid ${CATEGORY_ACCENT[event.category]}`,
+              }}
             >
               {/* Category + Almost Full badges */}
               <div className="flex items-center gap-2 mb-3">
@@ -256,9 +287,28 @@ export default function Home() {
                     🔥 Almost Full
                   </span>
                 )}
+                {event.seats === 0 && (
+                  <span className="text-xs px-2 py-1 rounded-full bg-gray-500/20 text-gray-400 border border-gray-500/30 font-medium">
+                    Sold Out
+                  </span>
+                )}
               </div>
 
-              <h2 className="text-xl font-semibold mb-1">{event.title}</h2>
+              <div className="flex items-start justify-between mb-1">
+                <h2 className="text-xl font-semibold">{event.title}</h2>
+                {/* Price badge */}
+                <span
+                  className="text-sm font-bold px-3 py-1 rounded-full ml-2 shrink-0"
+                  style={{
+                    background: `${CATEGORY_ACCENT[event.category]}22`,
+                    color: CATEGORY_ACCENT[event.category],
+                    border: `1px solid ${CATEGORY_ACCENT[event.category]}44`,
+                  }}
+                >
+                  {event.price}
+                </span>
+              </div>
+
               <p className="text-gray-300 mb-1">{event.artist}</p>
               <p className="text-gray-400 text-sm mb-1">📍 {event.location}</p>
               <p className="text-gray-400 text-sm mb-1">📅 {event.date} &nbsp; 🕐 {event.time}</p>
@@ -268,9 +318,7 @@ export default function Home() {
                 <p className="text-gray-400 text-xs mb-3">🎟 {bookingCounts[event.id]} booked</p>
               )}
 
-              <p className="mb-2 font-semibold">{event.price}</p>
-
-              {/* Seat count with pop animation */}
+              {/* Seat count */}
               <p className={`mb-2 text-sm ${event.seats <= 10 ? "text-red-400" : "text-green-400"}`}>
                 <span
                   key={`${event.title}-${event.seats}`}
@@ -281,19 +329,26 @@ export default function Home() {
                 seats left
               </p>
 
-              {/* Progress bar */}
+              {/* Progress bar — category color */}
               <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
                 <div
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                  style={{ width: `${(event.seats / event.maxSeats) * 100}%` }}
+                  className="h-2 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${(event.seats / event.maxSeats) * 100}%`,
+                    background: CATEGORY_ACCENT[event.category],
+                  }}
                 />
               </div>
 
               <button
                 onClick={() => handleBooking(event.id, event.title, event.date, event.time, event.location, event.price, event.seats)}
                 disabled={loading || event.seats === 0}
-                className={`w-full py-2 rounded-lg transition-all duration-200
-                ${selectedEvent === event.title ? "bg-green-600" : "bg-blue-600 hover:bg-blue-700"}
+                className={`w-full py-2 rounded-lg transition-all duration-200 font-medium
+                ${selectedEvent === event.title
+                  ? "bg-green-600"
+                  : event.seats === 0
+                    ? "bg-gray-700 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"}
                 active:scale-95`}
               >
                 {event.seats === 0

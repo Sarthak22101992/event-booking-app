@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Music:    "bg-purple-500/20 text-purple-300 border border-purple-500/30",
@@ -10,8 +11,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   Food:     "bg-pink-500/20 text-pink-300 border border-pink-500/30",
 };
 
-const FILTER_ACTIVE = "bg-blue-600 text-white";
+const FILTER_ACTIVE   = "bg-blue-600 text-white";
 const FILTER_INACTIVE = "bg-white/10 text-gray-300 hover:bg-white/20";
+const CATEGORIES      = ["All", "Music", "Tech", "Business", "Sports", "Comedy", "Food"];
 
 function getCountdown(dateStr: string): string {
   const eventDate = new Date(dateStr);
@@ -24,98 +26,60 @@ function getCountdown(dateStr: string): string {
   return `${diff} days away`;
 }
 
-const ALL_EVENTS = [
-  {
-    title: "DJ Night",
-    artist: "Martin Garrix",
-    price: "€50",
-    seats: 20,
-    maxSeats: 20,
-    date: "Apr 12, 2026",
-    time: "10:00 PM",
-    location: "O2 Arena, London",
-    category: "Music",
-  },
-  {
-    title: "Live Band",
-    artist: "Coldplay Tribute",
-    price: "€70",
-    seats: 12,
-    maxSeats: 12,
-    date: "Apr 18, 2026",
-    time: "8:00 PM",
-    location: "Royal Albert Hall, London",
-    category: "Music",
-  },
-  {
-    title: "AI Talk",
-    artist: "Elon Musk",
-    price: "Free",
-    seats: 50,
-    maxSeats: 50,
-    date: "Apr 25, 2026",
-    time: "3:00 PM",
-    location: "Convention Center, SF",
-    category: "Tech",
-  },
-  {
-    title: "Startup Pitch",
-    artist: "YC Founders",
-    price: "€20",
-    seats: 8,
-    maxSeats: 30,
-    date: "May 2, 2026",
-    time: "6:00 PM",
-    location: "YC HQ, Mountain View",
-    category: "Business",
-  },
-  {
-    title: "Boxing Night",
-    artist: "Anthony Joshua vs. Fury",
-    price: "€120",
-    seats: 35,
-    maxSeats: 35,
-    date: "May 10, 2026",
-    time: "9:00 PM",
-    location: "Madison Square Garden, NY",
-    category: "Sports",
-  },
-  {
-    title: "Stand-Up Night",
-    artist: "Kevin Hart",
-    price: "€45",
-    seats: 18,
-    maxSeats: 40,
-    date: "May 15, 2026",
-    time: "7:30 PM",
-    location: "Comedy Cellar, NYC",
-    category: "Comedy",
-  },
-  {
-    title: "Food Festival",
-    artist: "Top Chefs of Europe",
-    price: "€30",
-    seats: 60,
-    maxSeats: 60,
-    date: "May 22, 2026",
-    time: "12:00 PM",
-    location: "Riverside Park, Dublin",
-    category: "Food",
-  },
-];
-
-const CATEGORIES = ["All", ...Array.from(new Set(ALL_EVENTS.map((e) => e.category)))];
+type Event = {
+  id: number;
+  title: string;
+  artist: string;
+  price: string;
+  seats: number;
+  maxSeats: number;
+  date: string;
+  time: string;
+  location: string;
+  category: string;
+};
 
 export default function Home() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState("");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [animatingEvent, setAnimatingEvent] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
+  const [events, setEvents] = useState<Event[]>([]);
 
-  const [events, setEvents] = useState(ALL_EVENTS);
+  useEffect(() => {
+    async function fetchEvents() {
+      const { data, error } = await supabase
+        .from("events")
+        .select("*")
+        .order("id");
+
+      if (error) {
+        console.error("Failed to fetch events:", error.message);
+      } else {
+        setEvents(
+          data.map((e) => ({
+            id: e.id,
+            title: e.title,
+            artist: e.artist,
+            price: e.price,
+            seats: e.seats,
+            maxSeats: e.max_seats,
+            date: e.date,
+            time: e.time,
+            location: e.location,
+            category: e.category,
+          }))
+        );
+      }
+      setPageLoading(false);
+    }
+
+    fetchEvents();
+  }, []);
 
   const filteredEvents = activeFilter === "All"
     ? events
@@ -126,7 +90,15 @@ export default function Home() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleBooking = async (eventTitle: string, eventDate: string, eventTime: string, eventLocation: string, eventPrice: string) => {
+  const handleBooking = async (
+    eventId: number,
+    eventTitle: string,
+    eventDate: string,
+    eventTime: string,
+    eventLocation: string,
+    eventPrice: string,
+    currentSeats: number
+  ) => {
     if (!name || !email) {
       showToast("Please enter name & email first", "error");
       return;
@@ -135,20 +107,36 @@ export default function Home() {
     setLoading(true);
 
     try {
+      // Decrement seats in Supabase
+      const { error } = await supabase
+        .from("events")
+        .update({ seats: currentSeats - 1 })
+        .eq("id", eventId);
+
+      if (error) throw error;
+
+      // Send confirmation email
       await fetch("/api/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, event: eventTitle, date: eventDate, time: eventTime, location: eventLocation, price: eventPrice }),
+        body: JSON.stringify({
+          name,
+          email,
+          event: eventTitle,
+          date: eventDate,
+          time: eventTime,
+          location: eventLocation,
+          price: eventPrice,
+        }),
       });
 
+      // Update local state to reflect new seat count
       setAnimatingEvent(eventTitle);
       setTimeout(() => setAnimatingEvent(""), 500);
 
-      setEvents((prevEvents) =>
-        prevEvents.map((event) =>
-          event.title === eventTitle && event.seats > 0
-            ? { ...event, seats: event.seats - 1 }
-            : event
+      setEvents((prev) =>
+        prev.map((e) =>
+          e.id === eventId ? { ...e, seats: currentSeats - 1 } : e
         )
       );
 
@@ -216,73 +204,76 @@ export default function Home() {
       </div>
 
       {/* Event Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-        {filteredEvents.map((event, index) => (
-          <div
-            key={index}
-            className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl shadow-lg
-            hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/30
-            transition-all duration-300 cursor-pointer border border-transparent hover:border-blue-500"
-          >
-            {/* Category + Almost Full badges */}
-            <div className="flex items-center gap-2 mb-3">
-              <span className={`text-xs px-2 py-1 rounded-full font-medium ${CATEGORY_COLORS[event.category]}`}>
-                {event.category}
-              </span>
-              {event.seats > 0 && event.seats <= 10 && (
-                <span className="text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 font-medium animate-pulse">
-                  🔥 Almost Full
-                </span>
-              )}
-            </div>
-
-            <h2 className="text-xl font-semibold mb-1">{event.title}</h2>
-            <p className="text-gray-300 mb-1">{event.artist}</p>
-            <p className="text-gray-400 text-sm mb-1">📍 {event.location}</p>
-            <p className="text-gray-400 text-sm mb-1">📅 {event.date} &nbsp; 🕐 {event.time}</p>
-
-            {/* Countdown */}
-            <p className="text-blue-300 text-xs mb-3 font-medium">⏳ {getCountdown(event.date)}</p>
-
-            <p className="mb-2 font-semibold">{event.price}</p>
-
-            {/* Seat count with pop animation */}
-            <p className={`mb-2 text-sm ${event.seats <= 10 ? "text-red-400" : "text-green-400"}`}>
-              <span
-                key={`${event.title}-${event.seats}`}
-                className={animatingEvent === event.title ? "inline-block animate-seat-pop" : "inline-block"}
-              >
-                {event.seats}
-              </span>{" "}
-              seats left
-            </p>
-
-            {/* Progress bar */}
-            <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
-              <div
-                className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                style={{ width: `${(event.seats / event.maxSeats) * 100}%` }}
-              />
-            </div>
-
-            <button
-              onClick={() => handleBooking(event.title, event.date, event.time, event.location, event.price)}
-              disabled={loading || event.seats === 0}
-              className={`w-full py-2 rounded-lg transition-all duration-200
-              ${selectedEvent === event.title ? "bg-green-600" : "bg-blue-600 hover:bg-blue-700"}
-              active:scale-95`}
+      {pageLoading ? (
+        <p className="text-center text-gray-400 mt-20">Loading events...</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+          {filteredEvents.map((event) => (
+            <div
+              key={event.id}
+              className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl shadow-lg
+              hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/30
+              transition-all duration-300 cursor-pointer border border-transparent hover:border-blue-500"
             >
-              {event.seats === 0
-                ? "Sold Out"
-                : selectedEvent === event.title
-                  ? "Booked ✔"
-                  : loading
-                    ? "Booking..."
-                    : "Book Now"}
-            </button>
-          </div>
-        ))}
-      </div>
+              {/* Category + Almost Full badges */}
+              <div className="flex items-center gap-2 mb-3">
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${CATEGORY_COLORS[event.category]}`}>
+                  {event.category}
+                </span>
+                {event.seats > 0 && event.seats <= 10 && (
+                  <span className="text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 font-medium animate-pulse">
+                    🔥 Almost Full
+                  </span>
+                )}
+              </div>
+
+              <h2 className="text-xl font-semibold mb-1">{event.title}</h2>
+              <p className="text-gray-300 mb-1">{event.artist}</p>
+              <p className="text-gray-400 text-sm mb-1">📍 {event.location}</p>
+              <p className="text-gray-400 text-sm mb-1">📅 {event.date} &nbsp; 🕐 {event.time}</p>
+
+              <p className="text-blue-300 text-xs mb-3 font-medium">⏳ {getCountdown(event.date)}</p>
+
+              <p className="mb-2 font-semibold">{event.price}</p>
+
+              {/* Seat count with pop animation */}
+              <p className={`mb-2 text-sm ${event.seats <= 10 ? "text-red-400" : "text-green-400"}`}>
+                <span
+                  key={`${event.title}-${event.seats}`}
+                  className={animatingEvent === event.title ? "inline-block animate-seat-pop" : "inline-block"}
+                >
+                  {event.seats}
+                </span>{" "}
+                seats left
+              </p>
+
+              {/* Progress bar */}
+              <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
+                <div
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${(event.seats / event.maxSeats) * 100}%` }}
+                />
+              </div>
+
+              <button
+                onClick={() => handleBooking(event.id, event.title, event.date, event.time, event.location, event.price, event.seats)}
+                disabled={loading || event.seats === 0}
+                className={`w-full py-2 rounded-lg transition-all duration-200
+                ${selectedEvent === event.title ? "bg-green-600" : "bg-blue-600 hover:bg-blue-700"}
+                active:scale-95`}
+              >
+                {event.seats === 0
+                  ? "Sold Out"
+                  : selectedEvent === event.title
+                    ? "Booked ✔"
+                    : loading
+                      ? "Booking..."
+                      : "Book Now"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

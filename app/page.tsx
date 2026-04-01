@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import type { User } from "@supabase/supabase-js";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Music:    "bg-purple-500/20 text-purple-300 border border-purple-500/30",
@@ -127,6 +128,7 @@ type Event = {
 };
 
 export default function Home() {
+  const [user, setUser] = useState<User | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -148,6 +150,28 @@ export default function Home() {
     date: string; time: string; price: string; ref: string;
   } | null>(null);
   const eventsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user);
+        setName(session.user.user_metadata?.full_name ?? "");
+        setEmail(session.user.email ?? "");
+      }
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        setName(session.user.user_metadata?.full_name ?? "");
+        setEmail(session.user.email ?? "");
+      } else {
+        setUser(null);
+        setName("");
+        setEmail("");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     async function fetchEvents() {
@@ -298,16 +322,31 @@ export default function Home() {
             <div className="border-t border-white/10 mb-6" />
 
             {/* Form */}
-            <p className="text-gray-300 text-sm mb-4 font-medium">Your details</p>
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full Name"
-              className="w-full p-3 mb-4 rounded-lg bg-white/10 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500" />
-            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email Address"
-              className={`w-full p-3 mb-1 rounded-lg bg-white/10 border focus:outline-none focus:ring-2 text-white placeholder-gray-500
-                ${email && !isValidEmail(email) ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-blue-500"}`} />
-            {email && !isValidEmail(email) && (
-              <p className="text-red-400 text-xs mb-3 pl-1">Please enter a valid email address</p>
+            {user ? (
+              <div className="flex items-center gap-3 mb-6 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <span className="text-green-400 text-lg">✓</span>
+                <div>
+                  <p className="text-green-300 text-sm font-medium">{name}</p>
+                  <p className="text-gray-400 text-xs">{user.email}</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="text-gray-300 text-sm mb-4 font-medium">Your details</p>
+                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full Name"
+                  className="w-full p-3 mb-4 rounded-lg bg-white/10 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500" />
+                <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email Address"
+                  className={`w-full p-3 mb-1 rounded-lg bg-white/10 border focus:outline-none focus:ring-2 text-white placeholder-gray-500
+                    ${email && !isValidEmail(email) ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-blue-500"}`} />
+                {email && !isValidEmail(email) && (
+                  <p className="text-red-400 text-xs mb-3 pl-1">Please enter a valid email address</p>
+                )}
+                {!(email && !isValidEmail(email)) && <div className="mb-4" />}
+                <p className="text-gray-500 text-xs mb-4 text-center">
+                  <Link href="/login" className="text-blue-400 hover:text-blue-300">Sign in</Link> to auto-fill your details
+                </p>
+              </>
             )}
-            {!(email && !isValidEmail(email)) && <div className="mb-4" />}
 
             {/* Actions */}
             <button
@@ -381,6 +420,27 @@ export default function Home() {
           {toast.message}
         </div>
       )}
+
+      {/* Top bar */}
+      <div className="max-w-5xl mx-auto flex justify-end mb-4">
+        {user ? (
+          <div className="flex items-center gap-3">
+            <span className="text-gray-400 text-sm hidden sm:block">{user.email}</span>
+            <Link href="/my-bookings" className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10">
+              My Bookings
+            </Link>
+            <button onClick={() => supabase.auth.signOut()}
+              className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10">
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <Link href="/login"
+            className="text-sm font-medium px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors">
+            Sign In
+          </Link>
+        )}
+      </div>
 
       {/* Hero */}
       <div className="text-center mb-10">

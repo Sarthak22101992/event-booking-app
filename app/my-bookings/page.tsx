@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
 const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val);
 
@@ -15,22 +16,41 @@ type Booking = {
 };
 
 export default function MyBookings() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState("");
 
-  const handleSearch = async () => {
-    if (!isValidEmail(email)) return;
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setIsLoggedIn(true);
+        setEmail(session.user.email ?? "");
+        setUserName(session.user.user_metadata?.full_name ?? "");
+        fetchBookings(session.user.email ?? "");
+      }
+    });
+  }, []);
+
+  const fetchBookings = async (emailToSearch: string) => {
+    if (!emailToSearch) return;
     setLoading(true);
     const { data } = await supabase
       .from("bookings")
       .select("*")
-      .eq("email", email)
+      .eq("email", emailToSearch)
       .order("created_at", { ascending: false });
     setBookings(data ?? []);
     setSearched(true);
     setLoading(false);
+  };
+
+  const handleSearch = () => {
+    if (!isValidEmail(email)) return;
+    fetchBookings(email);
   };
 
   const formatDate = (iso: string) => {
@@ -56,63 +76,89 @@ export default function MyBookings() {
 
         {/* Header */}
         <div className="mb-10">
-          <Link href="/" className="text-gray-400 hover:text-white text-sm transition-colors mb-6 inline-flex items-center gap-1">
-            ← Back to RESERVA
-          </Link>
+          <div className="flex items-center justify-between mb-6">
+            <Link href="/" className="text-gray-400 hover:text-white text-sm transition-colors inline-flex items-center gap-1">
+              ← Back to RESERVA
+            </Link>
+            {isLoggedIn && (
+              <button onClick={() => { supabase.auth.signOut(); router.push("/"); }}
+                className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10">
+                Sign Out
+              </button>
+            )}
+          </div>
           <div className="flex items-center gap-3 mt-4 mb-1">
             <div className="relative w-10 h-10 flex items-center justify-center rounded-xl shrink-0"
               style={{ background: "linear-gradient(135deg, #1d4ed8, #7c3aed)", boxShadow: "0 0 24px #6366f155" }}>
               <span className="text-xl select-none">🎟</span>
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 border-2 border-[#06060f]" style={{ boxShadow: "0 0 8px #06b6d4" }} />
             </div>
-            <h1 className="text-3xl font-extrabold"
-              style={{ background: "linear-gradient(to right, #60a5fa, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              My Bookings
-            </h1>
+            <div>
+              <h1 className="text-3xl font-extrabold"
+                style={{ background: "linear-gradient(to right, #60a5fa, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                My Bookings
+              </h1>
+              {isLoggedIn && userName && (
+                <p className="text-gray-400 text-sm">Welcome back, {userName}</p>
+              )}
+            </div>
           </div>
-          <p className="text-gray-400 text-sm">Enter your email to see your booking history</p>
+          {!isLoggedIn && <p className="text-gray-400 text-sm mt-2">Enter your email to see your booking history</p>}
         </div>
 
-        {/* Search box */}
-        <div className="flex gap-3 mb-8">
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            placeholder="Your email address"
-            className={`flex-1 p-3 rounded-lg bg-white/10 border focus:outline-none focus:ring-2 text-white placeholder-gray-500
-              ${email && !isValidEmail(email) ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-blue-500"}`}
-          />
-          <button
-            onClick={handleSearch}
-            disabled={loading || !isValidEmail(email)}
-            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all px-5 rounded-lg font-semibold">
-            {loading ? "..." : "Search"}
-          </button>
-        </div>
+        {/* Search box — only shown when not logged in */}
+        {!isLoggedIn && (
+          <div className="flex gap-3 mb-8">
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              placeholder="Your email address"
+              className={`flex-1 p-3 rounded-lg bg-white/10 border focus:outline-none focus:ring-2 text-white placeholder-gray-500
+                ${email && !isValidEmail(email) ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-blue-500"}`}
+            />
+            <button
+              onClick={handleSearch}
+              disabled={loading || !isValidEmail(email)}
+              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all px-5 rounded-lg font-semibold">
+              {loading ? "..." : "Search"}
+            </button>
+          </div>
+        )}
+
+        {/* Loading spinner for auto-load */}
+        {loading && (
+          <div className="text-center py-16">
+            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-gray-400 text-sm">Loading your bookings...</p>
+          </div>
+        )}
 
         {/* Results */}
-        {searched && (
+        {!loading && searched && (
           bookings.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-4xl mb-3">📭</p>
               <p className="text-white font-semibold text-lg">No bookings found</p>
               <p className="text-gray-400 text-sm mt-1">No bookings are associated with this email</p>
+              <Link href="/" className="mt-4 text-blue-400 hover:text-blue-300 text-sm underline inline-block">
+                Browse events →
+              </Link>
             </div>
           ) : (
             <div>
               <p className="text-gray-400 text-sm mb-4">{bookings.length} booking{bookings.length > 1 ? "s" : ""} found</p>
               <div className="space-y-4">
-                {bookings.map((b) => (
+                {bookings.map((b, i) => (
                   <div key={b.id} className="rounded-2xl border border-white/10 p-5 animate-card-enter"
-                    style={{ background: "rgba(255,255,255,0.04)" }}>
+                    style={{ background: "rgba(255,255,255,0.04)", animationDelay: `${i * 60}ms` }}>
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="text-white font-semibold text-lg">{b.event_title}</p>
                         <p className="text-gray-400 text-sm mt-1">👤 {b.name}</p>
                         <p className="text-gray-500 text-xs mt-2">🕐 Booked on {formatDate(b.created_at)}</p>
                       </div>
-                      <span className="text-green-400 text-xl shrink-0">✓</span>
+                      <span className="text-green-400 text-xl shrink-0 mt-1">✓</span>
                     </div>
                   </div>
                 ))}
@@ -129,7 +175,6 @@ export default function MyBookings() {
         </p>
         <p className="text-gray-600 text-xs mt-1">© 2026 RESERVA · All rights reserved</p>
       </div>
-
     </div>
   );
 }

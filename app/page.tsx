@@ -115,6 +115,8 @@ export default function Home() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val);
+
   const handleBooking = async (
     eventId: number,
     eventTitle: string,
@@ -126,6 +128,11 @@ export default function Home() {
   ) => {
     if (!name || !email) {
       showToast("Please enter name & email first", "error");
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      showToast("Please enter a valid email address", "error");
       return;
     }
 

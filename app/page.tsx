@@ -34,6 +34,54 @@ const CATEGORY_EMOJI: Record<string, string> = {
   AI:       "🤖",
 };
 
+const CATEGORY_IMAGE: Record<string, string> = {
+  Music:    "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80",
+  Tech:     "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80",
+  Business: "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=600&q=80",
+  Sports:   "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&q=80",
+  Comedy:   "https://images.unsplash.com/photo-1527224857830-43a7acc85260?w=600&q=80",
+  Food:     "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80",
+  AI:       "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&q=80",
+};
+
+const EVENT_IMAGE: Record<string, string> = {
+  // Music
+  "DJ Night":              "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&q=80",
+  "Live Band":             "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&q=80",
+  "Jazz Evening":          "https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=600&q=80",
+  "Classical Night":       "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=600&q=80",
+  "EDM Festival":          "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=600&q=80",
+  "Hip Hop Night":         "https://images.unsplash.com/photo-1493676304819-0d7a8d026dcf?w=600&q=80",
+  // Tech
+  "Web3 Summit":           "https://images.unsplash.com/photo-1639762681057-408e52192e55?w=600&q=80",
+  "Startup Pitch":         "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&q=80",
+  "Dev Conference":        "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80",
+  "Cloud Summit":          "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&q=80",
+  // Business
+  "Leadership Forum":      "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600&q=80",
+  "Networking Night":      "https://images.unsplash.com/photo-1511578314322-379afb476865?w=600&q=80",
+  "Investment Summit":     "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&q=80",
+  // Sports
+  "F1 Watch Party":        "https://images.unsplash.com/photo-1504707748692-419802cf939d?w=600&q=80",
+  "Football Match":        "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600&q=80",
+  "Marathon":              "https://images.unsplash.com/photo-1530549387789-4c1017266635?w=600&q=80",
+  // Comedy
+  "Stand-Up Night":        "https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=600&q=80",
+  "Roast Night":           "https://images.unsplash.com/photo-1567593810070-7a3d471af022?w=600&q=80",
+  "Improv Show":           "https://images.unsplash.com/photo-1595769816263-9b910be24d5f?w=600&q=80",
+  // Food
+  "Wine & Dine Evening":   "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=600&q=80",
+  "Food Festival":         "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&q=80",
+  "Chef's Table":          "https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=600&q=80",
+  "Neon Rave":             "https://images.unsplash.com/photo-1598387993441-a364f854cfd1?w=600&q=80",
+  // AI
+  "AI Talk":               "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=600&q=80",
+  "AI & Future of Work":   "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80",
+  "Machine Learning Day":  "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=600&q=80",
+  "ChatGPT Workshop":      "https://images.unsplash.com/photo-1684369176170-463e84248b70?w=600&q=80",
+  "Robotics Expo":         "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80",
+};
+
 const FILTER_ACTIVE   = "bg-blue-600 text-white";
 const FILTER_INACTIVE = "bg-white/10 text-gray-300 hover:bg-white/20";
 const CATEGORIES      = ["All", "Music", "Tech", "Business", "Sports", "Comedy", "Food", "AI"];
@@ -439,51 +487,69 @@ export default function Home() {
 
       {/* Top bar */}
       <div className="max-w-5xl mx-auto flex justify-end mb-4">
-        {user ? (
-          <div className="flex items-center gap-3">
-            <span className="text-gray-400 text-sm hidden sm:block">{user.email}</span>
-            <Link href="/my-bookings" className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10">
-              My Bookings
+        <div className="flex items-center gap-3">
+          <Link href="/help" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10">
+            Help
+          </Link>
+          {user ? (
+            <>
+              <span className="text-gray-600 hidden sm:block">|</span>
+              <span className="text-gray-400 text-sm hidden sm:block">{user.email}</span>
+              <Link href="/my-bookings" className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10">
+                My Bookings
+              </Link>
+              <button onClick={() => supabase.auth.signOut()}
+                className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10">
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <Link href="/login"
+              className="text-sm font-medium px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors">
+              Sign In
             </Link>
-            <button onClick={() => supabase.auth.signOut()}
-              className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10">
-              Sign Out
+          )}
+        </div>
+      </div>
+
+      {/* Hero Banner */}
+      <div className="relative rounded-3xl overflow-hidden mb-12 max-w-5xl mx-auto"
+        style={{ minHeight: "280px", background: "linear-gradient(135deg, #1e1b4b 0%, #1d4ed8 50%, #7c3aed 100%)" }}>
+        {/* Background image overlay */}
+        <img src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&q=80"
+          alt="hero" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(10,10,40,0.85) 0%, rgba(10,10,40,0.4) 100%)" }} />
+
+        <div className="relative z-10 p-10 flex flex-col justify-between h-full" style={{ minHeight: "280px" }}>
+          {/* Logo + tagline */}
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="relative w-11 h-11 flex items-center justify-center rounded-xl shrink-0"
+                style={{ background: "linear-gradient(135deg, #1d4ed8, #7c3aed)", boxShadow: "0 0 24px #6366f188" }}>
+                <span className="text-xl select-none">🎟</span>
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-400 border-2 border-[#06060f]" style={{ boxShadow: "0 0 8px #06b6d4" }} />
+              </div>
+              <h1 className="text-4xl font-extrabold tracking-wide text-white">RESERVA</h1>
+            </div>
+            <p className="text-blue-200 text-sm tracking-widest uppercase">Discover & Book Unforgettable Experiences</p>
+          </div>
+
+          {/* Search bar */}
+          <div className="mt-8 flex gap-3 max-w-2xl">
+            <div className="relative flex-1">
+              <input value={search} onChange={(e) => setSearch(e.target.value)}
+                placeholder="🔍 Search events, artists or cities..."
+                className="w-full px-5 py-4 rounded-2xl bg-white/10 backdrop-blur border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/40 text-sm" />
+              {search && (
+                <button onClick={() => setSearch("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors">✕</button>
+              )}
+            </div>
+            <button onClick={() => eventsRef.current?.scrollIntoView({ behavior: "smooth" })}
+              className="px-6 py-4 rounded-2xl font-semibold text-white transition-all active:scale-95 shrink-0"
+              style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)" }}>
+              Search
             </button>
           </div>
-        ) : (
-          <Link href="/login"
-            className="text-sm font-medium px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors">
-            Sign In
-          </Link>
-        )}
-      </div>
-
-      {/* Hero */}
-      <div className="text-center mb-10">
-        <div className="flex items-center justify-center gap-3 mb-2">
-          {/* Logo mark */}
-          <div className="relative w-12 h-12 flex items-center justify-center rounded-xl shrink-0"
-            style={{ background: "linear-gradient(135deg, #1d4ed8, #7c3aed)", boxShadow: "0 0 24px #6366f155, 0 0 8px #1d4ed855" }}>
-            <span className="text-2xl select-none" style={{ filter: "drop-shadow(0 0 6px #fff8)" }}>🎟</span>
-            {/* Corner accent */}
-            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-cyan-400 border-2 border-[#06060f]" style={{ boxShadow: "0 0 8px #06b6d4" }} />
-          </div>
-          <h1 className="text-5xl font-extrabold tracking-wide"
-            style={{ background: "linear-gradient(to right, #60a5fa, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            RESERVA
-          </h1>
-        </div>
-        <p className="text-gray-400 text-sm tracking-widest uppercase">Discover & Book Unforgettable Experiences</p>
-      </div>
-
-      {/* Search */}
-      <div className="max-w-xl mx-auto mb-10">
-        <div className="relative">
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="🔍 Search events or artists..."
-            className="w-full p-3 rounded-lg bg-white/10 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10" />
-          {search && (
-            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors">✕</button>
-          )}
         </div>
       </div>
 
@@ -549,19 +615,24 @@ export default function Home() {
                 ${selectedEvent === event.title ? "animate-booked-glow" : ""}`}
                 style={{ animationDelay: `${index * 80}ms`, background: "rgba(255,255,255,0.04)" }}>
 
-                {/* Colored Banner */}
-                <div className="relative h-24 flex items-center justify-center overflow-hidden"
-                  style={{ background: `linear-gradient(135deg, ${CATEGORY_ACCENT[event.category]}44, ${CATEGORY_ACCENT[event.category]}11)`,
-                    borderBottom: `1px solid ${CATEGORY_ACCENT[event.category]}33` }}>
-                  {/* Big faded emoji */}
-                  <span className="text-7xl opacity-20 select-none">{CATEGORY_EMOJI[event.category]}</span>
-                  {/* Viewing count */}
-                  <div className="absolute bottom-2 left-3 text-xs text-gray-300 flex items-center gap-1">
+                {/* Image Banner */}
+                <div className="relative h-44 overflow-hidden">
+                  <img
+                    src={EVENT_IMAGE[event.title] ?? CATEGORY_IMAGE[event.category]}
+                    alt={event.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)" }} />
+                  {/* Category emoji top-left */}
+                  <div className="absolute top-3 left-3 text-2xl">{CATEGORY_EMOJI[event.category]}</div>
+                  {/* Viewing count bottom-left */}
+                  <div className="absolute bottom-2 left-3 text-xs text-white/80 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block animate-pulse" />
                     {viewingCounts[event.id]} people viewing
                   </div>
-                  {/* Last booked */}
-                  <div className="absolute bottom-2 right-3 text-xs text-gray-400">
+                  {/* Last booked bottom-right */}
+                  <div className="absolute bottom-2 right-3 text-xs text-white/60">
                     🕐 booked {lastBooked[event.id]}m ago
                   </div>
                 </div>
@@ -645,15 +716,92 @@ export default function Home() {
       )}
 
       {/* Footer */}
-      <div className="text-center mt-20 pb-6 border-t border-white/5 pt-8">
-        <p style={{ background: "linear-gradient(to right, #60a5fa, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", display: "inline-block", fontWeight: 700 }}>
-          🎟️ RESERVA
-        </p>
-        <p className="text-gray-600 text-xs mt-1">© 2026 RESERVA · All rights reserved</p>
-        <Link href="/my-bookings" className="text-gray-500 hover:text-blue-400 text-xs mt-2 inline-block transition-colors">
-          View My Bookings →
-        </Link>
-      </div>
+      <footer className="mt-24 border-t border-white/5 pt-14 pb-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 mb-12">
+
+          {/* Brand */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="relative w-8 h-8 flex items-center justify-center rounded-lg shrink-0"
+                style={{ background: "linear-gradient(135deg, #1d4ed8, #7c3aed)" }}>
+                <span className="text-sm">🎟</span>
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-cyan-400 border border-[#06060f]" />
+              </div>
+              <span className="font-bold text-white">RESERVA</span>
+            </div>
+            <p className="text-gray-500 text-xs leading-relaxed">
+              The Netherlands' premier event booking platform. Discover, book, and experience unforgettable moments.
+            </p>
+            <p className="text-gray-500 text-xs mt-3">🌐 www.reserva.com</p>
+            <p className="text-gray-500 text-xs mt-1">📞 +31 20 847 3920</p>
+            <p className="text-gray-500 text-xs mt-1">📍 Keizersgracht 452-H, 1017 EG Amsterdam</p>
+          </div>
+
+          {/* Company */}
+          <div>
+            <h4 className="text-white text-sm font-semibold mb-4">Company</h4>
+            <ul className="space-y-2">
+              {["About Us", "Careers", "Press", "Blog", "Contact"].map((item) => (
+                <li key={item}>
+                  <Link href="/help" className="text-gray-500 hover:text-gray-300 text-xs transition-colors">{item}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Support */}
+          <div>
+            <h4 className="text-white text-sm font-semibold mb-4">Support</h4>
+            <ul className="space-y-2">
+              {[
+                { label: "Help Center", href: "/help" },
+                { label: "My Bookings", href: "/my-bookings" },
+                { label: "Cancellation Policy", href: "/help" },
+                { label: "Privacy Policy", href: "/help" },
+                { label: "Terms of Service", href: "/help" },
+              ].map((item) => (
+                <li key={item.label}>
+                  <Link href={item.href} className="text-gray-500 hover:text-gray-300 text-xs transition-colors">{item.label}</Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Connect */}
+          <div>
+            <h4 className="text-white text-sm font-semibold mb-4">Connect With Us</h4>
+            <div className="flex gap-3 mb-6">
+              {[
+                { icon: "𝕏", label: "Twitter" },
+                { icon: "in", label: "LinkedIn" },
+                { icon: "f", label: "Facebook" },
+                { icon: "▶", label: "YouTube" },
+                { icon: "📸", label: "Instagram" },
+              ].map((s) => (
+                <button key={s.label} title={s.label}
+                  className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all text-xs font-bold">
+                  {s.icon}
+                </button>
+              ))}
+            </div>
+            <h4 className="text-white text-sm font-semibold mb-3">Secure Payments</h4>
+            <div className="flex flex-wrap gap-2">
+              {["VISA", "MC", "iDEAL", "PayPal", "Apple Pay"].map((p) => (
+                <span key={p} className="px-2 py-1 rounded bg-white/5 border border-white/10 text-gray-400 text-xs font-medium">{p}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom bar */}
+        <div className="border-t border-white/5 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-gray-600 text-xs">© 2026 RESERVA B.V. · KVK 87654321 · Amsterdam, Netherlands · All rights reserved</p>
+          <div className="flex items-center gap-2">
+            <span className="text-green-500 text-xs">🔒</span>
+            <span className="text-gray-600 text-xs">SSL Secured · PCI DSS Compliant</span>
+          </div>
+        </div>
+      </footer>
 
     </div>
   );

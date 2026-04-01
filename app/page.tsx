@@ -8,39 +8,8 @@ export default function Home() {
   const [success, setSuccess] = useState("");
   const [selectedEvent, setSelectedEvent] = useState("");
 
-  const handleBooking = async (eventTitle: string) => {
-    if (!name || !email) {
-      alert("Please enter name & email first");
-      return;
-    }
-
-    setLoading(true);
-    setSuccess("");
-
-    try {
-      await fetch("/api/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          event: eventTitle,
-        }),
-      });
-
-      setSuccess(`🎉 Booked for ${eventTitle}!`);
-      setSelectedEvent(eventTitle);
-    } catch (err) {
-      console.error(err);
-      setSuccess("❌ Booking failed");
-    }
-
-    setLoading(false);
-  };
-
-  const events = [
+  // ✅ CHANGE 1: make events state so seats can update
+  const [events, setEvents] = useState([
     {
       title: "DJ Night",
       artist: "Martin Garrix",
@@ -65,17 +34,57 @@ export default function Home() {
       price: "€20",
       seats: 8,
     },
-  ];
+  ]);
+
+  const handleBooking = async (eventTitle: string) => {
+    if (!name || !email) {
+      alert("Please enter name & email first");
+      return;
+    }
+
+    setLoading(true);
+    setSuccess("");
+
+    try {
+      await fetch("/api/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          event: eventTitle,
+        }),
+      });
+
+      // ✅ CHANGE 2: reduce seats after booking
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          event.title === eventTitle && event.seats > 0
+            ? { ...event, seats: event.seats - 1 }
+            : event
+        )
+      );
+
+      setSuccess(`🎉 Booked for ${eventTitle}!`);
+      setSelectedEvent(eventTitle);
+    } catch (err) {
+      console.error(err);
+      setSuccess("❌ Booking failed");
+    }
+
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-blue-900 text-white p-8">
 
-      {/* HEADER */}
+      {/* ✅ CHANGE 3: TITLE UPDATED */}
       <h1 className="text-4xl font-extrabold text-center mb-10 tracking-wide">
-        🎟️ Book Your Next Experience
+        🎟️ RESERVA
       </h1>
 
-      {/* FORM */}
       <div className="max-w-xl mx-auto mb-12">
         <input
           value={name}
@@ -105,7 +114,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* EVENTS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
         {events.map((event, index) => (
           <div
@@ -118,7 +126,6 @@ export default function Home() {
             <p className="text-gray-300 mb-2">{event.artist}</p>
             <p className="mb-2">{event.price}</p>
 
-            {/* SEATS */}
             <p
               className={`mb-4 text-sm ${event.seats < 10 ? "text-red-400" : "text-green-400"
                 }`}
@@ -126,7 +133,6 @@ export default function Home() {
               {event.seats} seats left
             </p>
 
-            {/* PROGRESS BAR */}
             <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
               <div
                 className="bg-blue-500 h-2 rounded-full"
@@ -136,21 +142,22 @@ export default function Home() {
               ></div>
             </div>
 
-            {/* BUTTON */}
             <button
               onClick={() => handleBooking(event.title)}
-              disabled={loading}
+              disabled={loading || event.seats === 0}
               className={`w-full py-2 rounded-lg transition-all duration-200 
               ${selectedEvent === event.title
                   ? "bg-green-600"
                   : "bg-blue-600 hover:bg-blue-700"
                 } active:scale-95`}
             >
-              {selectedEvent === event.title
-                ? "Booked ✔"
-                : loading
-                  ? "Booking..."
-                  : "Book Now"}
+              {event.seats === 0
+                ? "Sold Out"
+                : selectedEvent === event.title
+                  ? "Booked ✔"
+                  : loading
+                    ? "Booking..."
+                    : "Book Now"}
             </button>
           </div>
         ))}

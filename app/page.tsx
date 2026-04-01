@@ -141,6 +141,7 @@ export default function Home() {
   const [viewingCounts, setViewingCounts] = useState<Record<number, number>>({});
   const [lastBooked, setLastBooked] = useState<Record<number, number>>({});
   const [bookedEventIds, setBookedEventIds] = useState<Set<number>>(new Set());
+  const [pendingEvent, setPendingEvent] = useState<Event | null>(null);
   const [confirmedBooking, setConfirmedBooking] = useState<{
     title: string; artist: string; location: string;
     date: string; time: string; price: string; ref: string;
@@ -270,6 +271,59 @@ export default function Home() {
         }} />
       </div>
 
+      {/* Booking Form Modal */}
+      {pendingEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }}>
+          <div className="bg-gray-900 border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl animate-card-enter">
+            {/* Event summary */}
+            <div className="mb-6">
+              <div className="h-1 w-12 rounded-full mb-4" style={{ background: CATEGORY_ACCENT[pendingEvent.category] }} />
+              <h2 className="text-xl font-bold text-white mb-1">{pendingEvent.title}</h2>
+              <p className="text-gray-400 text-sm">{pendingEvent.artist}</p>
+              <div className="flex flex-wrap gap-4 mt-3 text-sm text-gray-400">
+                <span>📅 {pendingEvent.date}</span>
+                <span>🕐 {pendingEvent.time}</span>
+                <span>📍 {pendingEvent.location}</span>
+              </div>
+              <div className="mt-3 inline-block text-sm font-bold px-3 py-1 rounded-full"
+                style={{ background: `${CATEGORY_ACCENT[pendingEvent.category]}22`, color: CATEGORY_ACCENT[pendingEvent.category], border: `1px solid ${CATEGORY_ACCENT[pendingEvent.category]}44` }}>
+                {pendingEvent.price}
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-white/10 mb-6" />
+
+            {/* Form */}
+            <p className="text-gray-300 text-sm mb-4 font-medium">Your details</p>
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full Name"
+              className="w-full p-3 mb-4 rounded-lg bg-white/10 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500" />
+            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email Address"
+              className={`w-full p-3 mb-1 rounded-lg bg-white/10 border focus:outline-none focus:ring-2 text-white placeholder-gray-500
+                ${email && !isValidEmail(email) ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-blue-500"}`} />
+            {email && !isValidEmail(email) && (
+              <p className="text-red-400 text-xs mb-3 pl-1">Please enter a valid email address</p>
+            )}
+            {!(email && !isValidEmail(email)) && <div className="mb-4" />}
+
+            {/* Actions */}
+            <button
+              onClick={async () => {
+                await handleBooking(pendingEvent.id, pendingEvent.title, pendingEvent.date, pendingEvent.time, pendingEvent.location, pendingEvent.price, pendingEvent.seats);
+                setPendingEvent(null);
+              }}
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all py-3 rounded-xl font-semibold mb-3">
+              {loading ? "Confirming..." : "Confirm Booking"}
+            </button>
+            <button onClick={() => { setPendingEvent(null); setName(""); setEmail(""); }}
+              className="w-full bg-white/5 hover:bg-white/10 active:scale-95 transition-all py-3 rounded-xl text-gray-400 hover:text-white font-medium">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Booking Confirmation Modal */}
       {confirmedBooking && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
@@ -334,28 +388,15 @@ export default function Home() {
         <p className="text-gray-400 text-sm tracking-widest uppercase">Discover & Book Unforgettable Experiences</p>
       </div>
 
-      {/* User Input */}
+      {/* Search */}
       <div className="max-w-xl mx-auto mb-10">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your Name"
-          className="w-full p-3 mb-4 rounded-lg bg-white/10 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Your Email"
-          className={`w-full p-3 mb-1 rounded-lg bg-white/10 border focus:outline-none focus:ring-2
-            ${email && !isValidEmail(email) ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-blue-500"}`} />
-        {email && !isValidEmail(email) && (
-          <p className="text-red-400 text-xs mb-3 pl-1">Please enter a valid email address</p>
-        )}
-        {!(email && !isValidEmail(email)) && <div className="mb-3" />}
-        <div className="relative mb-4">
+        <div className="relative">
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="🔍 Search events or artists..."
             className="w-full p-3 rounded-lg bg-white/10 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10" />
           {search && (
             <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors">✕</button>
           )}
         </div>
-        <button disabled={loading} onClick={() => eventsRef.current?.scrollIntoView({ behavior: "smooth" })}
-          className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all duration-200 py-3 rounded-lg font-semibold">
-          {loading ? "Processing..." : "Select Event Below ↓"}
-        </button>
       </div>
 
       {/* Filter + Sort row */}
@@ -481,7 +522,7 @@ export default function Home() {
                   </div>
 
                   <button
-                    onClick={() => handleBooking(event.id, event.title, event.date, event.time, event.location, event.price, event.seats)}
+                    onClick={() => { if (event.seats > 0 && !bookedEventIds.has(event.id)) setPendingEvent(event); }}
                     disabled={loading || event.seats === 0 || bookedEventIds.has(event.id)}
                     className={`w-full py-2 rounded-lg transition-all duration-200 font-medium active:scale-95
                     ${bookedEventIds.has(event.id) ? "bg-green-700 cursor-not-allowed"

@@ -236,12 +236,15 @@ export default function Home() {
         <p className="text-center text-gray-400 mt-20">Loading events...</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-          {filteredEvents.map((event) => (
+          {filteredEvents.map((event, index) => (
             <div
               key={event.id}
-              className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl shadow-lg
+              className={`bg-white/5 backdrop-blur-lg p-6 rounded-2xl shadow-lg
               hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/30
-              transition-all duration-300 cursor-pointer border border-transparent hover:border-blue-500"
+              transition-all duration-300 cursor-pointer border border-transparent hover:border-blue-500
+              animate-card-enter
+              ${selectedEvent === event.title ? "animate-booked-glow" : ""}`}
+              style={{ animationDelay: `${index * 80}ms` }}
             >
               {/* Category + Almost Full badges */}
               <div className="flex items-center gap-2 mb-3">

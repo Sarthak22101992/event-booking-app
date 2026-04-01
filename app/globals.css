@@ -38,3 +38,17 @@ body {
 
 .animate-slide-in { animation: slide-in 0.3s ease-out forwards; }
 .animate-seat-pop { animation: seat-pop 0.4s ease-out; }
+
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes booked-glow {
+  0%   { box-shadow: 0 0 0px #22c55e00; }
+  40%  { box-shadow: 0 0 30px #22c55e99; }
+  100% { box-shadow: 0 0 10px #22c55e33; }
+}
+
+.animate-card-enter { animation: card-enter 0.5s ease-out both; }
+.animate-booked-glow { animation: booked-glow 0.8s ease-out forwards; }

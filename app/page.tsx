@@ -196,12 +196,14 @@ export default function Home() {
     .filter((e) =>
       search === "" ||
       e.title.toLowerCase().includes(search.toLowerCase()) ||
-      e.artist.toLowerCase().includes(search.toLowerCase())
+      e.artist.toLowerCase().includes(search.toLowerCase()) ||
+      e.location.toLowerCase().includes(search.toLowerCase())
     )
     .sort((a, b) => {
       if (sortBy === "price-asc")  return parsePrice(a.price) - parsePrice(b.price);
       if (sortBy === "price-desc") return parsePrice(b.price) - parsePrice(a.price);
       if (sortBy === "seats")      return b.seats - a.seats;
+      if (sortBy === "city")       return a.location.localeCompare(b.location);
       return new Date(a.date).getTime() - new Date(b.date).getTime();
     });
 
@@ -227,7 +229,7 @@ export default function Home() {
 
       await supabase.from("bookings").insert({
         event_id: eventId, event_title: eventTitle,
-        attendee_name: name, attendee_email: email,
+        name: name, email: email,
       });
 
       setBookingCounts((prev) => ({ ...prev, [eventId]: (prev[eventId] || 0) + 1 }));
@@ -381,10 +383,19 @@ export default function Home() {
 
       {/* Hero */}
       <div className="text-center mb-10">
-        <h1 className="text-5xl font-extrabold tracking-wide mb-2"
-          style={{ background: "linear-gradient(to right, #60a5fa, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-          🎟️ RESERVA
-        </h1>
+        <div className="flex items-center justify-center gap-3 mb-2">
+          {/* Logo mark */}
+          <div className="relative w-12 h-12 flex items-center justify-center rounded-xl shrink-0"
+            style={{ background: "linear-gradient(135deg, #1d4ed8, #7c3aed)", boxShadow: "0 0 24px #6366f155, 0 0 8px #1d4ed855" }}>
+            <span className="text-2xl select-none" style={{ filter: "drop-shadow(0 0 6px #fff8)" }}>🎟</span>
+            {/* Corner accent */}
+            <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-cyan-400 border-2 border-[#06060f]" style={{ boxShadow: "0 0 8px #06b6d4" }} />
+          </div>
+          <h1 className="text-5xl font-extrabold tracking-wide"
+            style={{ background: "linear-gradient(to right, #60a5fa, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            RESERVA
+          </h1>
+        </div>
         <p className="text-gray-400 text-sm tracking-widest uppercase">Discover & Book Unforgettable Experiences</p>
       </div>
 
@@ -419,6 +430,7 @@ export default function Home() {
           <option value="price-asc">Sort: Price ↑</option>
           <option value="price-desc">Sort: Price ↓</option>
           <option value="seats">Sort: Most Seats</option>
+          <option value="city">Sort: City A–Z</option>
         </select>
       </div>
 

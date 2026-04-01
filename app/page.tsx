@@ -1,74 +1,101 @@
 "use client";
 import { useState } from "react";
 
+const CATEGORY_COLORS: Record<string, string> = {
+  Music:    "bg-purple-500/20 text-purple-300 border border-purple-500/30",
+  Tech:     "bg-blue-500/20 text-blue-300 border border-blue-500/30",
+  Business: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30",
+};
+
+function getCountdown(dateStr: string): string {
+  const eventDate = new Date(dateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (diff === 0) return "Today!";
+  if (diff === 1) return "Tomorrow!";
+  if (diff < 0) return "Past event";
+  return `${diff} days away`;
+}
+
 export default function Home() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
   const [selectedEvent, setSelectedEvent] = useState("");
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [animatingEvent, setAnimatingEvent] = useState("");
 
-  // ✅ CHANGE 1: make events state so seats can update
   const [events, setEvents] = useState([
     {
       title: "DJ Night",
       artist: "Martin Garrix",
       price: "€50",
       seats: 20,
+      maxSeats: 20,
       date: "Apr 12, 2026",
       time: "10:00 PM",
+      location: "O2 Arena, London",
+      category: "Music",
     },
     {
       title: "Live Band",
       artist: "Coldplay Tribute",
       price: "€70",
       seats: 12,
+      maxSeats: 12,
       date: "Apr 18, 2026",
       time: "8:00 PM",
+      location: "Royal Albert Hall, London",
+      category: "Music",
     },
     {
       title: "AI Talk",
       artist: "Elon Musk",
       price: "Free",
       seats: 50,
+      maxSeats: 50,
       date: "Apr 25, 2026",
       time: "3:00 PM",
+      location: "Convention Center, SF",
+      category: "Tech",
     },
     {
       title: "Startup Pitch",
       artist: "YC Founders",
       price: "€20",
       seats: 8,
+      maxSeats: 30,
       date: "May 2, 2026",
       time: "6:00 PM",
+      location: "YC HQ, Mountain View",
+      category: "Business",
     },
   ]);
 
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const handleBooking = async (eventTitle: string, eventDate: string, eventTime: string) => {
     if (!name || !email) {
-      alert("Please enter name & email first");
+      showToast("Please enter name & email first", "error");
       return;
     }
 
     setLoading(true);
-    setSuccess("");
 
     try {
       await fetch("/api/send", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          event: eventTitle,
-          date: eventDate,
-          time: eventTime,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, event: eventTitle, date: eventDate, time: eventTime }),
       });
 
-      // ✅ CHANGE 2: reduce seats after booking
+      setAnimatingEvent(eventTitle);
+      setTimeout(() => setAnimatingEvent(""), 500);
+
       setEvents((prevEvents) =>
         prevEvents.map((event) =>
           event.title === eventTitle && event.seats > 0
@@ -77,11 +104,11 @@ export default function Home() {
         )
       );
 
-      setSuccess(`🎉 Booked for ${eventTitle}!`);
+      showToast(`🎉 Booked for ${eventTitle}!`, "success");
       setSelectedEvent(eventTitle);
     } catch (err) {
       console.error(err);
-      setSuccess("❌ Booking failed");
+      showToast("❌ Booking failed. Try again.", "error");
     }
 
     setLoading(false);
@@ -90,7 +117,16 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-blue-900 text-white p-8">
 
-      {/* ✅ CHANGE 3: TITLE UPDATED */}
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl shadow-2xl text-white font-medium animate-slide-in
+            ${toast.type === "success" ? "bg-green-600" : "bg-red-600"}`}
+        >
+          {toast.message}
+        </div>
+      )}
+
       <h1 className="text-4xl font-extrabold text-center mb-10 tracking-wide">
         🎟️ RESERVA
       </h1>
@@ -102,65 +138,75 @@ export default function Home() {
           placeholder="Your Name"
           className="w-full p-3 mb-4 rounded-lg bg-white/10 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-
         <input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Your Email"
           className="w-full p-3 mb-4 rounded-lg bg-white/10 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-
         <button
           disabled={loading}
           className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all duration-200 py-3 rounded-lg font-semibold"
         >
           {loading ? "Processing..." : "Select Event Below"}
         </button>
-
-        {success && (
-          <p className="text-green-400 mt-4 text-center animate-pulse">
-            {success}
-          </p>
-        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
         {events.map((event, index) => (
           <div
             key={index}
-            className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl shadow-lg 
-            hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/30 
+            className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl shadow-lg
+            hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/30
             transition-all duration-300 cursor-pointer border border-transparent hover:border-blue-500"
           >
-            <h2 className="text-xl font-semibold mb-2">{event.title}</h2>
-            <p className="text-gray-300 mb-2">{event.artist}</p>
-            <p className="text-gray-400 text-sm mb-2">📅 {event.date} &nbsp; 🕐 {event.time}</p>
-            <p className="mb-2">{event.price}</p>
+            {/* Category + Almost Full badges */}
+            <div className="flex items-center gap-2 mb-3">
+              <span className={`text-xs px-2 py-1 rounded-full font-medium ${CATEGORY_COLORS[event.category]}`}>
+                {event.category}
+              </span>
+              {event.seats > 0 && event.seats <= 10 && (
+                <span className="text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 font-medium animate-pulse">
+                  🔥 Almost Full
+                </span>
+              )}
+            </div>
 
-            <p
-              className={`mb-4 text-sm ${event.seats < 10 ? "text-red-400" : "text-green-400"
-                }`}
-            >
-              {event.seats} seats left
+            <h2 className="text-xl font-semibold mb-1">{event.title}</h2>
+            <p className="text-gray-300 mb-1">{event.artist}</p>
+            <p className="text-gray-400 text-sm mb-1">📍 {event.location}</p>
+            <p className="text-gray-400 text-sm mb-1">📅 {event.date} &nbsp; 🕐 {event.time}</p>
+
+            {/* Countdown */}
+            <p className="text-blue-300 text-xs mb-3 font-medium">⏳ {getCountdown(event.date)}</p>
+
+            <p className="mb-2 font-semibold">{event.price}</p>
+
+            {/* Seat count with pop animation */}
+            <p className={`mb-2 text-sm ${event.seats <= 10 ? "text-red-400" : "text-green-400"}`}>
+              <span
+                key={`${event.title}-${event.seats}`}
+                className={animatingEvent === event.title ? "inline-block animate-seat-pop" : "inline-block"}
+              >
+                {event.seats}
+              </span>{" "}
+              seats left
             </p>
 
+            {/* Progress bar */}
             <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
               <div
-                className="bg-blue-500 h-2 rounded-full"
-                style={{
-                  width: `${(event.seats / 50) * 100}%`,
-                }}
-              ></div>
+                className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                style={{ width: `${(event.seats / event.maxSeats) * 100}%` }}
+              />
             </div>
 
             <button
               onClick={() => handleBooking(event.title, event.date, event.time)}
               disabled={loading || event.seats === 0}
-              className={`w-full py-2 rounded-lg transition-all duration-200 
-              ${selectedEvent === event.title
-                  ? "bg-green-600"
-                  : "bg-blue-600 hover:bg-blue-700"
-                } active:scale-95`}
+              className={`w-full py-2 rounded-lg transition-all duration-200
+              ${selectedEvent === event.title ? "bg-green-600" : "bg-blue-600 hover:bg-blue-700"}
+              active:scale-95`}
             >
               {event.seats === 0
                 ? "Sold Out"

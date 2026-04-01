@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
+import PaymentModal from "@/components/PaymentModal";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Music:    "bg-purple-500/20 text-purple-300 border border-purple-500/30",
@@ -195,6 +196,7 @@ export default function Home() {
   const [showPast, setShowPast] = useState(false);
   const [shakeField, setShakeField] = useState<"name" | "email" | null>(null);
   const [pendingEvent, setPendingEvent] = useState<Event | null>(null);
+  const [paymentEvent, setPaymentEvent] = useState<Event | null>(null);
   const [confirmedBooking, setConfirmedBooking] = useState<{
     title: string; artist: string; location: string;
     date: string; time: string; price: string; ref: string;
@@ -297,7 +299,8 @@ export default function Home() {
 
   const handleBooking = async (
     eventId: number, eventTitle: string, eventDate: string,
-    eventTime: string, eventLocation: string, eventPrice: string, currentSeats: number
+    eventTime: string, eventLocation: string, eventPrice: string, currentSeats: number,
+    paymentRef?: string
   ): Promise<boolean> => {
     if (!name || !email) { showToast("Please enter name & email first", "error"); return false; }
     if (!isValidEmail(email)) { showToast("Please enter a valid email address", "error"); return false; }
@@ -311,6 +314,7 @@ export default function Home() {
       await supabase.from("bookings").insert({
         event_id: eventId, event_title: eventTitle,
         name: name, email: email,
+        payment_ref: paymentRef ?? null,
       });
 
       setBookingCounts((prev) => ({ ...prev, [eventId]: (prev[eventId] || 0) + 1 }));
@@ -415,8 +419,8 @@ export default function Home() {
                   if (!name) { setShakeField("name"); setTimeout(() => setShakeField(null), 500); return; }
                   if (!email || !isValidEmail(email)) { setShakeField("email"); setTimeout(() => setShakeField(null), 500); return; }
                 }
-                const success = await handleBooking(pendingEvent.id, pendingEvent.title, pendingEvent.date, pendingEvent.time, pendingEvent.location, pendingEvent.price, pendingEvent.seats);
-                if (success) setPendingEvent(null);
+                setPaymentEvent(pendingEvent);
+                setPendingEvent(null);
               }}
               disabled={loading}
               className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all py-3 rounded-xl font-semibold mb-3">
@@ -428,6 +432,24 @@ export default function Home() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Payment Modal */}
+      {paymentEvent && (
+        <PaymentModal
+          eventTitle={paymentEvent.title}
+          eventDate={paymentEvent.date}
+          eventTime={paymentEvent.time}
+          eventLocation={paymentEvent.location}
+          price={paymentEvent.price}
+          name={name}
+          email={email}
+          onSuccess={async (paymentRef: string) => {
+            setPaymentEvent(null);
+            await handleBooking(paymentEvent.id, paymentEvent.title, paymentEvent.date, paymentEvent.time, paymentEvent.location, paymentEvent.price, paymentEvent.seats, paymentRef);
+          }}
+          onClose={() => { setPaymentEvent(null); }}
+        />
       )}
 
       {/* Booking Confirmation Modal */}

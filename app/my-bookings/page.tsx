@@ -23,6 +23,9 @@ export default function MyBookings() {
   const [loading, setLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [confirmCancelId, setConfirmCancelId] = useState<number | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -34,6 +37,11 @@ export default function MyBookings() {
       }
     });
   }, []);
+
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const fetchBookings = async (emailToSearch: string) => {
     if (!emailToSearch) return;
@@ -51,6 +59,38 @@ export default function MyBookings() {
   const handleSearch = () => {
     if (!isValidEmail(email)) return;
     fetchBookings(email);
+  };
+
+  const handleCancel = async (booking: Booking) => {
+    setCancellingId(booking.id);
+    try {
+      // Delete booking
+      const { error: deleteError } = await supabase
+        .from("bookings")
+        .delete()
+        .eq("id", booking.id);
+      if (deleteError) throw deleteError;
+
+      // Increment seats back
+      const { data: eventData } = await supabase
+        .from("events")
+        .select("seats")
+        .eq("id", booking.event_id)
+        .single();
+      if (eventData) {
+        await supabase
+          .from("events")
+          .update({ seats: eventData.seats + 1 })
+          .eq("id", booking.event_id);
+      }
+
+      setBookings((prev) => prev.filter((b) => b.id !== booking.id));
+      showToast("Booking cancelled successfully", "success");
+    } catch {
+      showToast("Failed to cancel. Please try again.", "error");
+    }
+    setCancellingId(null);
+    setConfirmCancelId(null);
   };
 
   const formatDate = (iso: string) => {
@@ -71,6 +111,14 @@ export default function MyBookings() {
           backgroundSize: "60px 60px"
         }} />
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-50 px-5 py-3 rounded-xl shadow-2xl text-white font-medium animate-slide-in
+          ${toast.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
+          {toast.message}
+        </div>
+      )}
 
       <div className="relative z-10 max-w-xl mx-auto">
 
@@ -126,7 +174,7 @@ export default function MyBookings() {
           </div>
         )}
 
-        {/* Loading spinner for auto-load */}
+        {/* Loading spinner */}
         {loading && (
           <div className="text-center py-16">
             <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
@@ -153,12 +201,35 @@ export default function MyBookings() {
                   <div key={b.id} className="rounded-2xl border border-white/10 p-5 animate-card-enter"
                     style={{ background: "rgba(255,255,255,0.04)", animationDelay: `${i * 60}ms` }}>
                     <div className="flex items-start justify-between gap-4">
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-white font-semibold text-lg">{b.event_title}</p>
                         <p className="text-gray-400 text-sm mt-1">👤 {b.name}</p>
                         <p className="text-gray-500 text-xs mt-2">🕐 Booked on {formatDate(b.created_at)}</p>
                       </div>
-                      <span className="text-green-400 text-xl shrink-0 mt-1">✓</span>
+                      <div className="flex flex-col items-end gap-2 shrink-0">
+                        <span className="text-green-400 text-lg">✓</span>
+                        {confirmCancelId === b.id ? (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleCancel(b)}
+                              disabled={cancellingId === b.id}
+                              className="text-xs px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-all active:scale-95 disabled:opacity-50">
+                              {cancellingId === b.id ? "..." : "Confirm"}
+                            </button>
+                            <button
+                              onClick={() => setConfirmCancelId(null)}
+                              className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-gray-300 transition-all">
+                              Keep
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmCancelId(b.id)}
+                            className="text-xs px-3 py-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 hover:text-red-400 text-gray-500 transition-all border border-white/10 hover:border-red-500/30">
+                            Cancel
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -144,6 +144,8 @@ export default function Home() {
   const [viewingCounts, setViewingCounts] = useState<Record<number, number>>({});
   const [lastBooked, setLastBooked] = useState<Record<number, number>>({});
   const [bookedEventIds, setBookedEventIds] = useState<Set<number>>(new Set());
+  const [showPast, setShowPast] = useState(false);
+  const [shakeField, setShakeField] = useState<"name" | "email" | null>(null);
   const [pendingEvent, setPendingEvent] = useState<Event | null>(null);
   const [confirmedBooking, setConfirmedBooking] = useState<{
     title: string; artist: string; location: string;
@@ -216,7 +218,13 @@ export default function Home() {
       .map(([id]) => Number(id))
   );
 
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+
   const filteredEvents = events
+    .filter((e) => {
+      const isPast = new Date(e.date) < today;
+      return showPast ? isPast : !isPast;
+    })
     .filter((e) => activeFilter === "All" || e.category === activeFilter)
     .filter((e) =>
       search === "" ||
@@ -242,10 +250,10 @@ export default function Home() {
   const handleBooking = async (
     eventId: number, eventTitle: string, eventDate: string,
     eventTime: string, eventLocation: string, eventPrice: string, currentSeats: number
-  ) => {
-    if (!name || !email) { showToast("Please enter name & email first", "error"); return; }
-    if (!isValidEmail(email)) { showToast("Please enter a valid email address", "error"); return; }
-    if (bookedEventIds.has(eventId)) { showToast("You've already booked this event!", "error"); return; }
+  ): Promise<boolean> => {
+    if (!name || !email) { showToast("Please enter name & email first", "error"); return false; }
+    if (!isValidEmail(email)) { showToast("Please enter a valid email address", "error"); return false; }
+    if (bookedEventIds.has(eventId)) { showToast("You've already booked this event!", "error"); return false; }
 
     setLoading(true);
     try {
@@ -276,11 +284,14 @@ export default function Home() {
       setSelectedEvent(eventTitle);
       setBookedEventIds((prev) => new Set(prev).add(eventId));
       setConfirmedBooking({ title: eventTitle, artist, location: eventLocation, date: eventDate, time: eventTime, price: eventPrice, ref: bookingRef });
+      setLoading(false);
+      return true;
     } catch (err) {
       console.error(err);
       showToast("❌ Booking failed. Try again.", "error");
+      setLoading(false);
+      return false;
     }
-    setLoading(false);
   };
 
   return (
@@ -333,11 +344,12 @@ export default function Home() {
             ) : (
               <>
                 <p className="text-gray-300 text-sm mb-4 font-medium">Your details</p>
-                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full Name"
-                  className="w-full p-3 mb-4 rounded-lg bg-white/10 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500" />
-                <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email Address"
+                <input value={name} onChange={(e) => { setName(e.target.value); setShakeField(null); }} placeholder="Full Name"
+                  className={`w-full p-3 mb-4 rounded-lg bg-white/10 border focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500
+                    ${shakeField === "name" ? "border-red-500 animate-shake" : "border-gray-700"}`} />
+                <input value={email} onChange={(e) => { setEmail(e.target.value); setShakeField(null); }} placeholder="Email Address"
                   className={`w-full p-3 mb-1 rounded-lg bg-white/10 border focus:outline-none focus:ring-2 text-white placeholder-gray-500
-                    ${email && !isValidEmail(email) ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-blue-500"}`} />
+                    ${shakeField === "email" || (email && !isValidEmail(email)) ? "border-red-500 animate-shake focus:ring-red-500" : "border-gray-700 focus:ring-blue-500"}`} />
                 {email && !isValidEmail(email) && (
                   <p className="text-red-400 text-xs mb-3 pl-1">Please enter a valid email address</p>
                 )}
@@ -351,8 +363,12 @@ export default function Home() {
             {/* Actions */}
             <button
               onClick={async () => {
-                await handleBooking(pendingEvent.id, pendingEvent.title, pendingEvent.date, pendingEvent.time, pendingEvent.location, pendingEvent.price, pendingEvent.seats);
-                setPendingEvent(null);
+                if (!user) {
+                  if (!name) { setShakeField("name"); setTimeout(() => setShakeField(null), 500); return; }
+                  if (!email || !isValidEmail(email)) { setShakeField("email"); setTimeout(() => setShakeField(null), 500); return; }
+                }
+                const success = await handleBooking(pendingEvent.id, pendingEvent.title, pendingEvent.date, pendingEvent.time, pendingEvent.location, pendingEvent.price, pendingEvent.seats);
+                if (success) setPendingEvent(null);
               }}
               disabled={loading}
               className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all py-3 rounded-xl font-semibold mb-3">
@@ -473,7 +489,18 @@ export default function Home() {
 
       {/* Filter + Sort row */}
       <div className="max-w-5xl mx-auto mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          {/* Upcoming / Past toggle */}
+          <div className="flex rounded-lg bg-white/5 p-0.5 mr-2">
+            <button onClick={() => setShowPast(false)}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${!showPast ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}>
+              Upcoming
+            </button>
+            <button onClick={() => setShowPast(true)}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${showPast ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}>
+              Past
+            </button>
+          </div>
           {CATEGORIES.map((cat) => {
             const count = cat === "All" ? events.length : events.filter((e) => e.category === cat).length;
             return (
@@ -605,6 +632,11 @@ export default function Home() {
                       : bookedEventIds.has(event.id) ? "Already Booked ✓"
                       : loading ? "Booking..." : "Book Now"}
                   </button>
+                  {bookedEventIds.has(event.id) && (
+                    <Link href="/my-bookings" className="block text-center text-xs text-gray-500 hover:text-red-400 transition-colors mt-2">
+                      Cancel booking →
+                    </Link>
+                  )}
                 </div>
               </div>
             ))}

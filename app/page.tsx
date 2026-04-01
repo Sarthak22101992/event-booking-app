@@ -126,7 +126,7 @@ export default function Home() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleBooking = async (eventTitle: string, eventDate: string, eventTime: string) => {
+  const handleBooking = async (eventTitle: string, eventDate: string, eventTime: string, eventLocation: string, eventPrice: string) => {
     if (!name || !email) {
       showToast("Please enter name & email first", "error");
       return;
@@ -138,7 +138,7 @@ export default function Home() {
       await fetch("/api/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, event: eventTitle, date: eventDate, time: eventTime }),
+        body: JSON.stringify({ name, email, event: eventTitle, date: eventDate, time: eventTime, location: eventLocation, price: eventPrice }),
       });
 
       setAnimatingEvent(eventTitle);
@@ -266,7 +266,7 @@ export default function Home() {
             </div>
 
             <button
-              onClick={() => handleBooking(event.title, event.date, event.time)}
+              onClick={() => handleBooking(event.title, event.date, event.time, event.location, event.price)}
               disabled={loading || event.seats === 0}
               className={`w-full py-2 rounded-lg transition-all duration-200
               ${selectedEvent === event.title ? "bg-green-600" : "bg-blue-600 hover:bg-blue-700"}

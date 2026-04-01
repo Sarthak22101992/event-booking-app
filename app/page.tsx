@@ -4,6 +4,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { User } from "@supabase/supabase-js";
 import PaymentModal from "@/components/PaymentModal";
+import { useLang } from "@/lib/LanguageContext";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Music:    "bg-purple-500/20 text-purple-300 border border-purple-500/30",
@@ -87,15 +88,15 @@ const FILTER_ACTIVE   = "bg-blue-600 text-white";
 const FILTER_INACTIVE = "bg-white/10 text-gray-300 hover:bg-white/20";
 const CATEGORIES      = ["All", "Music", "Tech", "Business", "Sports", "Comedy", "Food", "AI"];
 
-function getCountdown(dateStr: string): string {
+function getCountdown(dateStr: string, tr: { today: string; tomorrow: string; pastEvent: string; daysAway: string }): string {
   const eventDate = new Date(dateStr);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const diff = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (diff === 0) return "Today!";
-  if (diff === 1) return "Tomorrow!";
-  if (diff < 0) return "Past event";
-  return `${diff} days away`;
+  if (diff === 0) return tr.today;
+  if (diff === 1) return tr.tomorrow;
+  if (diff < 0) return tr.pastEvent;
+  return `${diff} ${tr.daysAway}`;
 }
 
 function parsePrice(price: string): number {
@@ -177,6 +178,7 @@ type Event = {
 };
 
 export default function Home() {
+  const { lang, setLang, tr } = useLang();
   const [user, setUser] = useState<User | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -302,9 +304,9 @@ export default function Home() {
     eventTime: string, eventLocation: string, eventPrice: string, currentSeats: number,
     paymentRef?: string
   ): Promise<boolean> => {
-    if (!name || !email) { showToast("Please enter name & email first", "error"); return false; }
-    if (!isValidEmail(email)) { showToast("Please enter a valid email address", "error"); return false; }
-    if (bookedEventIds.has(eventId)) { showToast("You've already booked this event!", "error"); return false; }
+    if (!name || !email) { showToast(tr.toastNameEmail, "error"); return false; }
+    if (!isValidEmail(email)) { showToast(tr.toastInvalidEmail, "error"); return false; }
+    if (bookedEventIds.has(eventId)) { showToast(tr.toastAlreadyBooked, "error"); return false; }
 
     setLoading(true);
     try {
@@ -332,7 +334,7 @@ export default function Home() {
       const bookingRef = "RES-" + Math.random().toString(36).substring(2, 8).toUpperCase();
       const artist = events.find((e) => e.id === eventId)?.artist ?? "";
       launchConfetti();
-      showToast(`🎉 Booked for ${eventTitle}!`, "success");
+      showToast(`${tr.toastBooked} ${eventTitle}!`, "success");
       setSelectedEvent(eventTitle);
       setBookedEventIds((prev) => new Set(prev).add(eventId));
       setConfirmedBooking({ title: eventTitle, artist, location: eventLocation, date: eventDate, time: eventTime, price: eventPrice, ref: bookingRef });
@@ -340,7 +342,7 @@ export default function Home() {
       return true;
     } catch (err) {
       console.error(err);
-      showToast("❌ Booking failed. Try again.", "error");
+      showToast(tr.toastFailed, "error");
       setLoading(false);
       return false;
     }
@@ -395,19 +397,19 @@ export default function Home() {
               </div>
             ) : (
               <>
-                <p className="text-gray-300 text-sm mb-4 font-medium">Your details</p>
-                <input value={name} onChange={(e) => { setName(e.target.value); setShakeField(null); }} placeholder="Full Name"
+                <p className="text-gray-300 text-sm mb-4 font-medium">{tr.yourDetails}</p>
+                <input value={name} onChange={(e) => { setName(e.target.value); setShakeField(null); }} placeholder={tr.fullName}
                   className={`w-full p-3 mb-4 rounded-lg bg-white/10 border focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500
                     ${shakeField === "name" ? "border-red-500 animate-shake" : "border-gray-700"}`} />
-                <input value={email} onChange={(e) => { setEmail(e.target.value); setShakeField(null); }} placeholder="Email Address"
+                <input value={email} onChange={(e) => { setEmail(e.target.value); setShakeField(null); }} placeholder={tr.emailAddress}
                   className={`w-full p-3 mb-1 rounded-lg bg-white/10 border focus:outline-none focus:ring-2 text-white placeholder-gray-500
                     ${shakeField === "email" || (email && !isValidEmail(email)) ? "border-red-500 animate-shake focus:ring-red-500" : "border-gray-700 focus:ring-blue-500"}`} />
                 {email && !isValidEmail(email) && (
-                  <p className="text-red-400 text-xs mb-3 pl-1">Please enter a valid email address</p>
+                  <p className="text-red-400 text-xs mb-3 pl-1">{tr.validEmail}</p>
                 )}
                 {!(email && !isValidEmail(email)) && <div className="mb-4" />}
                 <p className="text-gray-500 text-xs mb-4 text-center">
-                  <Link href="/login" className="text-blue-400 hover:text-blue-300">Sign in</Link> to auto-fill your details
+                  <Link href="/login" className="text-blue-400 hover:text-blue-300">{tr.signIn}</Link> {tr.signInToFill}
                 </p>
               </>
             )}
@@ -424,11 +426,11 @@ export default function Home() {
               }}
               disabled={loading}
               className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all py-3 rounded-xl font-semibold mb-3">
-              {loading ? "Confirming..." : "Confirm Booking"}
+              {loading ? tr.booking : tr.proceedToPayment}
             </button>
             <button onClick={() => { setPendingEvent(null); setName(""); setEmail(""); }}
               className="w-full bg-white/5 hover:bg-white/10 active:scale-95 transition-all py-3 rounded-xl text-gray-400 hover:text-white font-medium">
-              Cancel
+              {tr.cancel}
             </button>
           </div>
         </div>
@@ -458,42 +460,42 @@ export default function Home() {
           <div className="bg-gray-900 border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl animate-card-enter">
             <div className="text-center mb-6">
               <div className="text-5xl mb-3">✅</div>
-              <h2 className="text-2xl font-bold text-white">Booking Confirmed!</h2>
-              <p className="text-gray-400 text-sm mt-1">A confirmation has been sent to your email</p>
+              <h2 className="text-2xl font-bold text-white">{tr.bookingConfirmed}</h2>
+              <p className="text-gray-400 text-sm mt-1">{tr.confirmationSent}</p>
             </div>
             <div className="bg-white/5 rounded-xl p-5 space-y-3 mb-6">
               <div className="flex justify-between items-start">
-                <span className="text-gray-400 text-sm">Event</span>
+                <span className="text-gray-400 text-sm">{tr.eventLabel}</span>
                 <span className="text-white font-semibold text-right">{confirmedBooking.title}</span>
               </div>
               <div className="flex justify-between items-start">
-                <span className="text-gray-400 text-sm">Artist</span>
+                <span className="text-gray-400 text-sm">{tr.artistLabel}</span>
                 <span className="text-white text-right">{confirmedBooking.artist}</span>
               </div>
               <div className="flex justify-between items-start">
-                <span className="text-gray-400 text-sm">📍 Venue</span>
+                <span className="text-gray-400 text-sm">{tr.venueLabel}</span>
                 <span className="text-white text-right text-sm">{confirmedBooking.location}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400 text-sm">📅 Date</span>
+                <span className="text-gray-400 text-sm">{tr.dateLabel}</span>
                 <span className="text-white text-sm">{confirmedBooking.date}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400 text-sm">🕐 Time</span>
+                <span className="text-gray-400 text-sm">{tr.timeLabel}</span>
                 <span className="text-white text-sm">{confirmedBooking.time}</span>
               </div>
               <div className="border-t border-white/10 pt-3 flex justify-between">
-                <span className="text-gray-400 text-sm">Total Paid</span>
+                <span className="text-gray-400 text-sm">{tr.totalPaid}</span>
                 <span className="font-bold text-green-400">{confirmedBooking.price}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400 text-sm">Booking Ref</span>
+                <span className="text-gray-400 text-sm">{tr.bookingRef}</span>
                 <span className="font-mono text-purple-300 text-sm">{confirmedBooking.ref}</span>
               </div>
             </div>
             <button onClick={() => setConfirmedBooking(null)}
               className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all py-3 rounded-xl font-semibold">
-              Close
+              {tr.close}
             </button>
           </div>
         </div>
@@ -510,25 +512,36 @@ export default function Home() {
       {/* Top bar */}
       <div className="max-w-5xl mx-auto flex justify-end mb-4">
         <div className="flex items-center gap-3">
+          {/* Language toggle */}
+          <div className="flex rounded-lg bg-white/5 p-0.5 border border-white/10">
+            <button onClick={() => setLang("en")}
+              className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${lang === "en" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}>
+              🇬🇧 EN
+            </button>
+            <button onClick={() => setLang("nl")}
+              className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${lang === "nl" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}>
+              🇳🇱 NL
+            </button>
+          </div>
           <Link href="/help" className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10">
-            Help
+            {tr.help}
           </Link>
           {user ? (
             <>
               <span className="text-gray-600 hidden sm:block">|</span>
               <span className="text-gray-400 text-sm hidden sm:block">{user.email}</span>
               <Link href="/my-bookings" className="text-sm text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10">
-                My Bookings
+                {tr.myBookings}
               </Link>
               <button onClick={() => supabase.auth.signOut()}
                 className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10">
-                Sign Out
+                {tr.signOut}
               </button>
             </>
           ) : (
             <Link href="/login"
               className="text-sm font-medium px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors">
-              Sign In
+              {tr.signIn}
             </Link>
           )}
         </div>
@@ -553,14 +566,14 @@ export default function Home() {
               </div>
               <h1 className="text-4xl font-extrabold tracking-wide text-white">RESERVA</h1>
             </div>
-            <p className="text-blue-200 text-sm tracking-widest uppercase">Discover & Book Unforgettable Experiences</p>
+            <p className="text-blue-200 text-sm tracking-widest uppercase">{tr.tagline}</p>
           </div>
 
           {/* Search bar */}
           <div className="mt-8 flex gap-3 max-w-2xl">
             <div className="relative flex-1">
               <input value={search} onChange={(e) => setSearch(e.target.value)}
-                placeholder="🔍 Search events, artists or cities..."
+                placeholder={tr.searchPlaceholder}
                 className="w-full px-5 py-4 rounded-2xl bg-white/10 backdrop-blur border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/40 text-sm" />
               {search && (
                 <button onClick={() => setSearch("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors">✕</button>
@@ -569,7 +582,7 @@ export default function Home() {
             <button onClick={() => eventsRef.current?.scrollIntoView({ behavior: "smooth" })}
               className="px-6 py-4 rounded-2xl font-semibold text-white transition-all active:scale-95 shrink-0"
               style={{ background: "linear-gradient(135deg, #2563eb, #7c3aed)" }}>
-              Search
+              {tr.search}
             </button>
           </div>
         </div>
@@ -582,11 +595,11 @@ export default function Home() {
           <div className="flex rounded-lg bg-white/5 p-0.5 mr-2">
             <button onClick={() => setShowPast(false)}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${!showPast ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}>
-              Upcoming
+              {tr.upcoming}
             </button>
             <button onClick={() => setShowPast(true)}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${showPast ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}>
-              Past
+              {tr.past}
             </button>
           </div>
           {CATEGORIES.map((cat) => {
@@ -602,11 +615,11 @@ export default function Home() {
         </div>
         <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
           className="bg-white/10 border border-gray-700 text-gray-300 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
-          <option value="date">Sort: Date</option>
-          <option value="price-asc">Sort: Price ↑</option>
-          <option value="price-desc">Sort: Price ↓</option>
-          <option value="seats">Sort: Most Seats</option>
-          <option value="city">Sort: City A–Z</option>
+          <option value="date">{tr.sortDate}</option>
+          <option value="price-asc">{tr.sortPriceAsc}</option>
+          <option value="price-desc">{tr.sortPriceDesc}</option>
+          <option value="seats">{tr.sortSeats}</option>
+          <option value="city">{tr.sortCity}</option>
         </select>
       </div>
 
@@ -620,11 +633,11 @@ export default function Home() {
           {filteredEvents.length === 0 && (
             <div className="text-center mt-16">
               <p className="text-4xl mb-3">🔍</p>
-              <p className="text-white font-semibold text-lg">No events found</p>
-              <p className="text-gray-400 text-sm mt-1">Try a different search or category</p>
+              <p className="text-white font-semibold text-lg">{tr.noEventsFound}</p>
+              <p className="text-gray-400 text-sm mt-1">{tr.tryDifferent}</p>
               <button onClick={() => { setSearch(""); setActiveFilter("All"); }}
                 className="mt-4 text-blue-400 hover:text-blue-300 text-sm underline">
-                Clear filters
+                {tr.clearFilters}
               </button>
             </div>
           )}
@@ -651,11 +664,11 @@ export default function Home() {
                   {/* Viewing count bottom-left */}
                   <div className="absolute bottom-2 left-3 text-xs text-white/80 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block animate-pulse" />
-                    {viewingCounts[event.id]} people viewing
+                    {viewingCounts[event.id]} {tr.peopleViewing}
                   </div>
                   {/* Last booked bottom-right */}
                   <div className="absolute bottom-2 right-3 text-xs text-white/60">
-                    🕐 booked {lastBooked[event.id]}m ago
+                    🕐 {tr.bookedAgo} {lastBooked[event.id]}{tr.minutesAgo}
                   </div>
                 </div>
 
@@ -668,17 +681,17 @@ export default function Home() {
                     </span>
                     {trendingIds.has(event.id) && (
                       <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 font-medium animate-pulse">
-                        🚀 Trending
+                        {tr.trending}
                       </span>
                     )}
                     {event.seats > 0 && event.seats / event.maxSeats < 0.1 && (
                       <span className="text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 font-medium animate-pulse">
-                        🔥 Almost Full
+                        {tr.almostFull}
                       </span>
                     )}
                     {event.seats === 0 && (
                       <span className="text-xs px-2 py-1 rounded-full bg-gray-500/20 text-gray-400 border border-gray-500/30 font-medium">
-                        Sold Out
+                        {tr.soldOut}
                       </span>
                     )}
                   </div>
@@ -695,9 +708,9 @@ export default function Home() {
                   <p className="text-gray-300 mb-1">{event.artist}</p>
                   <p className="text-gray-400 text-sm mb-1">📍 {event.location}</p>
                   <p className="text-gray-400 text-sm mb-1">📅 {event.date} &nbsp; 🕐 {event.time}</p>
-                  <p className="text-blue-300 text-xs mb-1 font-medium">⏳ {getCountdown(event.date)}</p>
+                  <p className="text-blue-300 text-xs mb-1 font-medium">⏳ {getCountdown(event.date, tr)}</p>
                   {(bookingCounts[event.id] || 0) > 0 && (
-                    <p className="text-gray-400 text-xs mb-3">🎟 {bookingCounts[event.id]} booked</p>
+                    <p className="text-gray-400 text-xs mb-3">🎟 {bookingCounts[event.id]} {tr.booked}</p>
                   )}
 
                   {/* Seat count */}
@@ -705,7 +718,7 @@ export default function Home() {
                     <span key={`${event.title}-${event.seats}`}
                       className={animatingEvent === event.title ? "inline-block animate-seat-pop" : "inline-block"}>
                       {event.seats}
-                    </span>{" "}seats left
+                    </span>{" "}{tr.seatsLeft}
                   </p>
 
                   {/* Progress bar */}
@@ -721,13 +734,13 @@ export default function Home() {
                     ${bookedEventIds.has(event.id) ? "bg-green-700 cursor-not-allowed"
                       : event.seats === 0 ? "bg-gray-700 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700"}`}>
-                    {event.seats === 0 ? "Sold Out"
-                      : bookedEventIds.has(event.id) ? "Already Booked ✓"
-                      : loading ? "Booking..." : "Book Now"}
+                    {event.seats === 0 ? tr.soldOut
+                      : bookedEventIds.has(event.id) ? tr.alreadyBooked
+                      : loading ? tr.booking : tr.bookNow}
                   </button>
                   {bookedEventIds.has(event.id) && (
                     <Link href="/my-bookings" className="block text-center text-xs text-gray-500 hover:text-red-400 transition-colors mt-2">
-                      Cancel booking →
+                      {tr.cancelBooking}
                     </Link>
                   )}
                 </div>
@@ -752,7 +765,7 @@ export default function Home() {
               <span className="font-bold text-white">RESERVA</span>
             </div>
             <p className="text-gray-500 text-xs leading-relaxed">
-              The Netherlands' premier event booking platform. Discover, book, and experience unforgettable moments.
+              {tr.footerTagline}
             </p>
             <p className="text-gray-500 text-xs mt-3">🌐 www.reserva.com</p>
             <p className="text-gray-500 text-xs mt-1">📞 +31 20 847 3920</p>
@@ -761,11 +774,14 @@ export default function Home() {
 
           {/* Company */}
           <div>
-            <h4 className="text-white text-sm font-semibold mb-4">Company</h4>
+            <h4 className="text-white text-sm font-semibold mb-4">{tr.company}</h4>
             <ul className="space-y-2">
-              {["About Us", "Careers", "Press", "Blog", "Contact"].map((item) => (
-                <li key={item}>
-                  <Link href="/help" className="text-gray-500 hover:text-gray-300 text-xs transition-colors">{item}</Link>
+              {[
+                { label: tr.aboutUs }, { label: tr.careers }, { label: tr.press },
+                { label: tr.blog }, { label: tr.contact },
+              ].map((item) => (
+                <li key={item.label}>
+                  <Link href="/help" className="text-gray-500 hover:text-gray-300 text-xs transition-colors">{item.label}</Link>
                 </li>
               ))}
             </ul>
@@ -773,14 +789,14 @@ export default function Home() {
 
           {/* Support */}
           <div>
-            <h4 className="text-white text-sm font-semibold mb-4">Support</h4>
+            <h4 className="text-white text-sm font-semibold mb-4">{tr.support}</h4>
             <ul className="space-y-2">
               {[
-                { label: "Help Center", href: "/help" },
-                { label: "My Bookings", href: "/my-bookings" },
-                { label: "Cancellation Policy", href: "/help" },
-                { label: "Privacy Policy", href: "/help" },
-                { label: "Terms of Service", href: "/help" },
+                { label: tr.helpCenter, href: "/help" },
+                { label: tr.myBookings, href: "/my-bookings" },
+                { label: tr.cancellationPolicy, href: "/help" },
+                { label: tr.privacyPolicy, href: "/help" },
+                { label: tr.termsOfService, href: "/help" },
               ].map((item) => (
                 <li key={item.label}>
                   <Link href={item.href} className="text-gray-500 hover:text-gray-300 text-xs transition-colors">{item.label}</Link>
@@ -791,7 +807,7 @@ export default function Home() {
 
           {/* Connect */}
           <div>
-            <h4 className="text-white text-sm font-semibold mb-4">Connect With Us</h4>
+            <h4 className="text-white text-sm font-semibold mb-4">{tr.connectWithUs}</h4>
             <div className="flex gap-3 mb-6">
               {[
                 { icon: "𝕏", label: "Twitter" },
@@ -806,7 +822,7 @@ export default function Home() {
                 </button>
               ))}
             </div>
-            <h4 className="text-white text-sm font-semibold mb-3">Secure Payments</h4>
+            <h4 className="text-white text-sm font-semibold mb-3">{tr.securePayments}</h4>
             <div className="flex flex-wrap gap-2">
               {["VISA", "MC", "iDEAL", "PayPal", "Apple Pay"].map((p) => (
                 <span key={p} className="px-2 py-1 rounded bg-white/5 border border-white/10 text-gray-400 text-xs font-medium">{p}</span>
@@ -817,10 +833,10 @@ export default function Home() {
 
         {/* Bottom bar */}
         <div className="border-t border-white/5 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-gray-600 text-xs">© 2026 RESERVA B.V. · KVK 87654321 · Amsterdam, Netherlands · All rights reserved</p>
+          <p className="text-gray-600 text-xs">{tr.footerCopyright}</p>
           <div className="flex items-center gap-2">
             <span className="text-green-500 text-xs">🔒</span>
-            <span className="text-gray-600 text-xs">SSL Secured · PCI DSS Compliant</span>
+            <span className="text-gray-600 text-xs">{tr.sslSecured}</span>
           </div>
         </div>
       </footer>

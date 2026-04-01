@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useLang } from "@/lib/LanguageContext";
 
 const FAQS = [
   {
@@ -86,6 +87,7 @@ const FAQS = [
 ];
 
 export default function HelpPage() {
+  const { tr } = useLang();
   const [openItem, setOpenItem] = useState<string | null>(null);
 
   return (
@@ -117,9 +119,9 @@ export default function HelpPage() {
             <div>
               <h1 className="text-3xl font-extrabold"
                 style={{ background: "linear-gradient(to right, #60a5fa, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                Help Center
+                {tr.helpTitle}
               </h1>
-              <p className="text-gray-400 text-sm">Frequently asked questions</p>
+              <p className="text-gray-400 text-sm">{tr.helpSubtitle}</p>
             </div>
           </div>
         </div>
@@ -128,8 +130,8 @@ export default function HelpPage() {
         <div className="rounded-2xl p-5 mb-10 flex items-center justify-between gap-4 border border-blue-500/20"
           style={{ background: "rgba(29,78,216,0.1)" }}>
           <div>
-            <p className="text-white font-semibold text-sm">Still need help?</p>
-            <p className="text-gray-400 text-xs mt-0.5">Our support team is available Mon–Fri, 9:00–18:00 CET</p>
+            <p className="text-white font-semibold text-sm">{tr.stillNeedHelp}</p>
+            <p className="text-gray-400 text-xs mt-0.5">{tr.supportAvailable}</p>
           </div>
           <div className="text-right shrink-0">
             <p className="text-blue-300 text-xs font-medium">📞 +31 20 847 3920</p>
@@ -173,7 +175,7 @@ export default function HelpPage() {
         <p style={{ background: "linear-gradient(to right, #60a5fa, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", display: "inline-block", fontWeight: 700 }}>
           🎟️ RESERVA
         </p>
-        <p className="text-gray-600 text-xs mt-1">© 2026 RESERVA B.V. · Amsterdam, Netherlands</p>
+        <p className="text-gray-600 text-xs mt-1">{tr.footerCopyright}</p>
       </div>
     </div>
   );

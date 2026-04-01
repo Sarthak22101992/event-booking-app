@@ -3,9 +3,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useLang } from "@/lib/LanguageContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { tr } = useLang();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -18,9 +20,9 @@ export default function LoginPage() {
   const handleSubmit = async () => {
     setError("");
     setMessage("");
-    if (!email || !password) { setError("Please fill in all fields."); return; }
-    if (mode === "signup" && !name) { setError("Please enter your name."); return; }
-    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (!email || !password) { setError(tr.loginFillAll); return; }
+    if (mode === "signup" && !name) { setError(tr.loginEnterName); return; }
+    if (password.length < 6) { setError(tr.loginPasswordLength); return; }
 
     setLoading(true);
 
@@ -31,12 +33,12 @@ export default function LoginPage() {
         options: { data: { full_name: name } },
       });
       if (signUpError) { setError(signUpError.message); setLoading(false); return; }
-      setMessage("Account created! You can now sign in.");
+      setMessage(tr.loginCreated);
       setMode("signin");
       setPassword("");
     } else {
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) { setError("Invalid email or password."); setLoading(false); return; }
+      if (signInError) { setError(tr.loginInvalid); setLoading(false); return; }
       router.push("/");
     }
 
@@ -78,25 +80,25 @@ export default function LoginPage() {
           <div className="flex rounded-xl bg-white/5 p-1 mb-8">
             <button onClick={() => { setMode("signin"); setError(""); setMessage(""); }}
               className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${mode === "signin" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}>
-              Sign In
+              {tr.loginSignIn}
             </button>
             <button onClick={() => { setMode("signup"); setError(""); setMessage(""); }}
               className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${mode === "signup" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}>
-              Create Account
+              {tr.loginCreateAccount}
             </button>
           </div>
 
           {/* Fields */}
           {mode === "signup" && (
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full Name"
+            <input value={name} onChange={(e) => setName(e.target.value)} placeholder={tr.fullName}
               className="w-full p-3 mb-4 rounded-lg bg-white/10 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500" />
           )}
-          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email Address" type="email"
+          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder={tr.emailAddress} type="email"
             className="w-full p-3 mb-4 rounded-lg bg-white/10 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500" />
           <div className="relative mb-6">
             <input value={password} onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-              placeholder="Password" type={showPassword ? "text" : "password"}
+              placeholder={tr.loginPassword} type={showPassword ? "text" : "password"}
               className="w-full p-3 pr-11 rounded-lg bg-white/10 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500" />
             <button type="button" onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors text-lg">
@@ -111,13 +113,13 @@ export default function LoginPage() {
           {/* Submit */}
           <button onClick={handleSubmit} disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 active:scale-95 transition-all py-3 rounded-xl font-semibold">
-            {loading ? "Please wait..." : mode === "signin" ? "Sign In" : "Create Account"}
+            {loading ? tr.loginWaiting : mode === "signin" ? tr.loginSignInBtn : tr.loginCreateBtn}
           </button>
         </div>
 
         <div className="text-center mt-6">
           <Link href="/" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">
-            ← Back to events
+            {tr.loginBackToEvents}
           </Link>
         </div>
       </div>

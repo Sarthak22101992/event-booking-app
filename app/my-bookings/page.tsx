@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useLang } from "@/lib/LanguageContext";
 
 const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val);
 
@@ -17,6 +18,7 @@ type Booking = {
 
 export default function MyBookings() {
   const router = useRouter();
+  const { tr } = useLang();
   const [email, setEmail] = useState("");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [searched, setSearched] = useState(false);
@@ -64,14 +66,12 @@ export default function MyBookings() {
   const handleCancel = async (booking: Booking) => {
     setCancellingId(booking.id);
     try {
-      // Delete booking
       const { error: deleteError } = await supabase
         .from("bookings")
         .delete()
         .eq("id", booking.id);
       if (deleteError) throw deleteError;
 
-      // Increment seats back
       const { data: eventData } = await supabase
         .from("events")
         .select("seats")
@@ -85,9 +85,9 @@ export default function MyBookings() {
       }
 
       setBookings((prev) => prev.filter((b) => b.id !== booking.id));
-      showToast("Booking cancelled successfully", "success");
+      showToast(tr.cancelSuccess, "success");
     } catch {
-      showToast("Failed to cancel. Please try again.", "error");
+      showToast(tr.cancelFailed, "error");
     }
     setCancellingId(null);
     setConfirmCancelId(null);
@@ -131,7 +131,7 @@ export default function MyBookings() {
             {isLoggedIn && (
               <button onClick={() => { supabase.auth.signOut(); router.push("/"); }}
                 className="text-sm text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10">
-                Sign Out
+                {tr.signOut}
               </button>
             )}
           </div>
@@ -144,14 +144,14 @@ export default function MyBookings() {
             <div>
               <h1 className="text-3xl font-extrabold"
                 style={{ background: "linear-gradient(to right, #60a5fa, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                My Bookings
+                {tr.myBookingsTitle}
               </h1>
               {isLoggedIn && userName && (
-                <p className="text-gray-400 text-sm">Welcome back, {userName}</p>
+                <p className="text-gray-400 text-sm">{tr.welcomeBack}, {userName}</p>
               )}
             </div>
           </div>
-          {!isLoggedIn && <p className="text-gray-400 text-sm mt-2">Enter your email to see your booking history</p>}
+          {!isLoggedIn && <p className="text-gray-400 text-sm mt-2">{tr.enterEmail}</p>}
         </div>
 
         {/* Search box — only shown when not logged in */}
@@ -161,7 +161,7 @@ export default function MyBookings() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              placeholder="Your email address"
+              placeholder={tr.yourEmailAddress}
               className={`flex-1 p-3 rounded-lg bg-white/10 border focus:outline-none focus:ring-2 text-white placeholder-gray-500
                 ${email && !isValidEmail(email) ? "border-red-500 focus:ring-red-500" : "border-gray-700 focus:ring-blue-500"}`}
             />
@@ -169,7 +169,7 @@ export default function MyBookings() {
               onClick={handleSearch}
               disabled={loading || !isValidEmail(email)}
               className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-all px-5 rounded-lg font-semibold">
-              {loading ? "..." : "Search"}
+              {loading ? "..." : tr.searchBtn}
             </button>
           </div>
         )}
@@ -178,7 +178,7 @@ export default function MyBookings() {
         {loading && (
           <div className="text-center py-16">
             <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-gray-400 text-sm">Loading your bookings...</p>
+            <p className="text-gray-400 text-sm">{tr.loadingBookings}</p>
           </div>
         )}
 
@@ -187,15 +187,17 @@ export default function MyBookings() {
           bookings.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-4xl mb-3">📭</p>
-              <p className="text-white font-semibold text-lg">No bookings found</p>
-              <p className="text-gray-400 text-sm mt-1">No bookings are associated with this email</p>
+              <p className="text-white font-semibold text-lg">{tr.noBookingsFound}</p>
+              <p className="text-gray-400 text-sm mt-1">{tr.noBookingsEmail}</p>
               <Link href="/" className="mt-4 text-blue-400 hover:text-blue-300 text-sm underline inline-block">
-                Browse events →
+                {tr.browseEvents}
               </Link>
             </div>
           ) : (
             <div>
-              <p className="text-gray-400 text-sm mb-4">{bookings.length} booking{bookings.length > 1 ? "s" : ""} found</p>
+              <p className="text-gray-400 text-sm mb-4">
+                {bookings.length} {bookings.length === 1 ? tr.bookingFound : tr.bookingsFound}
+              </p>
               <div className="space-y-4">
                 {bookings.map((b, i) => (
                   <div key={b.id} className="rounded-2xl border border-white/10 p-5 animate-card-enter"
@@ -204,7 +206,7 @@ export default function MyBookings() {
                       <div className="flex-1 min-w-0">
                         <p className="text-white font-semibold text-lg">{b.event_title}</p>
                         <p className="text-gray-400 text-sm mt-1">👤 {b.name}</p>
-                        <p className="text-gray-500 text-xs mt-2">🕐 Booked on {formatDate(b.created_at)}</p>
+                        <p className="text-gray-500 text-xs mt-2">🕐 {tr.bookedOn} {formatDate(b.created_at)}</p>
                       </div>
                       <div className="flex flex-col items-end gap-2 shrink-0">
                         <span className="text-green-400 text-lg">✓</span>
@@ -214,19 +216,19 @@ export default function MyBookings() {
                               onClick={() => handleCancel(b)}
                               disabled={cancellingId === b.id}
                               className="text-xs px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-all active:scale-95 disabled:opacity-50">
-                              {cancellingId === b.id ? "..." : "Confirm"}
+                              {cancellingId === b.id ? "..." : tr.confirmCancel}
                             </button>
                             <button
                               onClick={() => setConfirmCancelId(null)}
                               className="text-xs px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-gray-300 transition-all">
-                              Keep
+                              {tr.keepBtn}
                             </button>
                           </div>
                         ) : (
                           <button
                             onClick={() => setConfirmCancelId(b.id)}
                             className="text-xs px-3 py-1.5 rounded-lg bg-white/5 hover:bg-red-500/20 hover:text-red-400 text-gray-500 transition-all border border-white/10 hover:border-red-500/30">
-                            Cancel
+                            {tr.cancelBtn}
                           </button>
                         )}
                       </div>
@@ -244,7 +246,7 @@ export default function MyBookings() {
         <p style={{ background: "linear-gradient(to right, #60a5fa, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", display: "inline-block", fontWeight: 700 }}>
           🎟️ RESERVA
         </p>
-        <p className="text-gray-600 text-xs mt-1">© 2026 RESERVA · All rights reserved</p>
+        <p className="text-gray-600 text-xs mt-1">{tr.footerCopyright}</p>
       </div>
     </div>
   );

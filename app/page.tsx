@@ -15,28 +15,36 @@ export default function Home() {
       artist: "Martin Garrix",
       price: "€50",
       seats: 20,
+      date: "Apr 12, 2026",
+      time: "10:00 PM",
     },
     {
       title: "Live Band",
       artist: "Coldplay Tribute",
       price: "€70",
       seats: 12,
+      date: "Apr 18, 2026",
+      time: "8:00 PM",
     },
     {
       title: "AI Talk",
       artist: "Elon Musk",
       price: "Free",
       seats: 50,
+      date: "Apr 25, 2026",
+      time: "3:00 PM",
     },
     {
       title: "Startup Pitch",
       artist: "YC Founders",
       price: "€20",
       seats: 8,
+      date: "May 2, 2026",
+      time: "6:00 PM",
     },
   ]);
 
-  const handleBooking = async (eventTitle: string) => {
+  const handleBooking = async (eventTitle: string, eventDate: string, eventTime: string) => {
     if (!name || !email) {
       alert("Please enter name & email first");
       return;
@@ -55,6 +63,8 @@ export default function Home() {
           name,
           email,
           event: eventTitle,
+          date: eventDate,
+          time: eventTime,
         }),
       });
 
@@ -124,6 +134,7 @@ export default function Home() {
           >
             <h2 className="text-xl font-semibold mb-2">{event.title}</h2>
             <p className="text-gray-300 mb-2">{event.artist}</p>
+            <p className="text-gray-400 text-sm mb-2">📅 {event.date} &nbsp; 🕐 {event.time}</p>
             <p className="mb-2">{event.price}</p>
 
             <p
@@ -143,7 +154,7 @@ export default function Home() {
             </div>
 
             <button
-              onClick={() => handleBooking(event.title)}
+              onClick={() => handleBooking(event.title, event.date, event.time)}
               disabled={loading || event.seats === 0}
               className={`w-full py-2 rounded-lg transition-all duration-200 
               ${selectedEvent === event.title

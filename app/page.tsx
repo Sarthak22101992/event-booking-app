@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -557,6 +558,9 @@ export default function Home() {
           🎟️ RESERVA
         </p>
         <p className="text-gray-600 text-xs mt-1">© 2026 RESERVA · All rights reserved</p>
+        <Link href="/my-bookings" className="text-gray-500 hover:text-blue-400 text-xs mt-2 inline-block transition-colors">
+          View My Bookings →
+        </Link>
       </div>
 
     </div>

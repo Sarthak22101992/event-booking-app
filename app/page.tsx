@@ -88,6 +88,55 @@ const FILTER_ACTIVE   = "bg-blue-600 text-white";
 const FILTER_INACTIVE = "bg-white/10 text-gray-300 hover:bg-white/20";
 const CATEGORIES      = ["All", "Music", "Tech", "Business", "Sports", "Comedy", "Food", "AI"];
 
+const CATEGORY_LABELS: Record<string, { en: string; nl: string }> = {
+  All:      { en: "All",      nl: "Alles"    },
+  Music:    { en: "Music",    nl: "Muziek"   },
+  Tech:     { en: "Tech",     nl: "Tech"     },
+  Business: { en: "Business", nl: "Business" },
+  Sports:   { en: "Sports",   nl: "Sport"    },
+  Comedy:   { en: "Comedy",   nl: "Comedy"   },
+  Food:     { en: "Food",     nl: "Eten"     },
+  AI:       { en: "AI",       nl: "AI"       },
+};
+
+const EVENT_DESCRIPTION: Record<string, { en: string; nl: string }> = {
+  // Music
+  "DJ Night":           { en: "Lose yourself in a night of infectious beats and electric energy. Amsterdam's hottest DJ takes the decks — doors open, inhibitions close.", nl: "Verlies jezelf in een nacht vol aanstekelijke beats en elektrische energie. Amsterdam's hotste DJ aan de draaitafels — deuren open, remmingen dicht." },
+  "Live Band":          { en: "Raw. Loud. Unforgettable. Experience the power of live music in an intimate venue where every chord hits you in the chest.", nl: "Rauw. Hard. Onvergetelijk. Beleef de kracht van livemuziek in een intieme zaal waar elk akkoord je raakt." },
+  "Jazz Evening":       { en: "Sip your drink, close your eyes, and let the smooth sounds of jazz carry you somewhere beautiful. Dress code: timeless.", nl: "Neem een slokje, sluit je ogen en laat de soepele klanken van jazz je meenemen naar iets moois. Dresscode: tijdloos." },
+  "Classical Night":    { en: "An evening of pure musical mastery. World-class performers bring Beethoven, Mozart and more to life in breathtaking fashion.", nl: "Een avond van pure muzikale meesterschap. Wereldklasse uitvoerders brengen Beethoven, Mozart en meer tot leven." },
+  "EDM Festival":       { en: "The biggest EDM spectacle of the year. Laser shows, pyrotechnics, and six stages of non-stop electronic mayhem. Are you ready?", nl: "Het grootste EDM-spektakel van het jaar. Lasershow, vuurwerk en zes podia vol onafgebroken electronic chaos. Ben jij klaar?" },
+  "Hip Hop Night":      { en: "From the streets to the stage — an explosive evening of hip hop, rap and raw lyricism that'll have you on your feet all night.", nl: "Van de straat naar het podium — een explosieve avond hip hop, rap en rauw lyrisme die je de hele nacht op de been houdt." },
+  // Tech
+  "Web3 Summit":        { en: "Builders, founders and visionaries converge to shape the decentralised internet. Expect bold ideas, live demos, and zero hype — just substance.", nl: "Bouwers, oprichters en visionairs komen samen om het gedecentraliseerde internet vorm te geven. Verwacht gedurfde ideeën en live demo's." },
+  "Startup Pitch":      { en: "Six startups. Five minutes each. One shot at glory. Watch ambitious founders battle it out for investment in this high-stakes pitch night.", nl: "Zes startups. Vijf minuten elk. Eén kans op roem. Zie ambitieuze oprichters strijden om investering in deze spannende pitch-avond." },
+  "Dev Conference":     { en: "Three tracks, 20+ talks and hands-on workshops covering the tools shaping tomorrow's software. Level up, ship faster.", nl: "Drie tracks, 20+ talks en praktische workshops over de tools die de software van morgen vormgeven. Level up, sneller lanceren." },
+  "Cloud Summit":       { en: "Architecture at scale, cost optimisation, and the future of infrastructure — a must-attend for every engineer pushing production systems.", nl: "Architectuur op schaal, kostenoptimalisatie en de toekomst van infrastructuur — een must voor elke engineer die productiesystemen beheert." },
+  // Business
+  "Leadership Forum":   { en: "The most impactful leaders in Europe share the strategies, failures and breakthroughs that defined their careers. Be in the room.", nl: "De meest invloedrijke leiders van Europa delen de strategieën, mislukkingen en doorbraken die hun carrières bepaalden. Wees erbij." },
+  "Networking Night":   { en: "Skip the awkward small talk. This professionally curated networking evening connects you with the right people in 60 minutes flat.", nl: "Sla de ongemakkelijke praatjes over. Dit professioneel gecureerde netwerkevenement verbindt je met de juiste mensen in 60 minuten." },
+  "Investment Summit":  { en: "Deal flow, portfolio strategy and emerging markets — where Europe's top investors talk candidly about where the real money is moving.", nl: "Deal flow, portfoliostrategie en opkomende markten — waar Europa's topinvesteerders openhartig praten over waar het echte geld naartoe gaat." },
+  // Sports
+  "F1 Watch Party":     { en: "Giant screens, thunderous engines and 300km/h drama — watch the race the way it was meant to be watched. With a crowd going absolutely wild.", nl: "Gigantische schermen, donderende motoren en drama op 300km/u — bekijk de race zoals het hoort. Met een volledig uitgelaten menigte." },
+  "Football Match":     { en: "Ninety minutes. Two teams. One winner. Feel the raw passion of Dutch football from the stands — scarves, chants and all.", nl: "Negentig minuten. Twee teams. Één winnaar. Voel de rauwe passie van Nederlands voetbal — sjaals, gezangen en al het andere." },
+  "Marathon":           { en: "42km of grit, glory and personal triumph. Whether you're racing for a PB or just to finish — Amsterdam's streets will carry you home.", nl: "42km van doorzettingsvermogen, glorie en persoonlijke triomf. Of je nu voor een PR gaat of gewoon de finish haalt — Amsterdam draagt je." },
+  // Comedy
+  "Stand-Up Night":     { en: "Warning: side-splitting laughter may cause shortness of breath. Three of the sharpest comedians in the Netherlands — one hilarious night.", nl: "Waarschuwing: slappe lach kan kortademigheid veroorzaken. Drie van de scherpste comedians van Nederland — één hilarische avond." },
+  "Roast Night":        { en: "No topic is off-limits. No ego is safe. The most savage comedy format on earth returns — bring your thickest skin and loudest laugh.", nl: "Geen onderwerp is taboe. Geen ego is veilig. Het meest genadeloze comedyformat ter wereld is terug — kom met een dikke huid en harde lach." },
+  "Improv Show":        { en: "Completely unscripted. Wildly unpredictable. The audience drives the story — and anything can happen. Literally anything.", nl: "Volledig ongeschreven. Volledig onvoorspelbaar. Het publiek bepaalt het verhaal — en alles kan gebeuren. Letterlijk alles." },
+  // Food
+  "Wine & Dine Evening": { en: "A culinary journey paired with exceptional wines. Each course tells a story — from the vineyard to your plate, expertly guided by a sommelier.", nl: "Een culinaire reis gepaard met uitzonderlijke wijnen. Elk gerecht vertelt een verhaal — van de wijngaard tot je bord, begeleid door een sommelier." },
+  "Food Festival":      { en: "Fifty food vendors, one epic location. Street food, gourmet bites and everything in between — come hungry, leave amazed.", nl: "Vijftig foodkramen, één epische locatie. Street food, gourmetgerechten en alles daartussenin — kom hongerig, vertrek verbaasd." },
+  "Chef's Table":       { en: "A once-in-a-season private dining experience. Eight courses, one Michelin-starred chef, and twelve seats that go faster than you'd think.", nl: "Een eenmalige privé-dinerervaring. Acht gangen, één Michelin-ster chef, en twaalf plekken die sneller weg zijn dan je denkt." },
+  "Neon Rave":          { en: "Blacklights, neon paint and the kind of music that vibrates through your whole body. This isn't a party — it's a full sensory experience.", nl: "Zwartlichten, neonverf en muziek die door je hele lichaam trilt. Dit is geen feest — het is een volledig zintuiglijke ervaring." },
+  // AI
+  "AI Talk":            { en: "The world's smartest minds on AI gather for one evening of provocative ideas, honest debate and the conversations the tech press won't print.", nl: "De slimste AI-geesten ter wereld komen samen voor een avond vol provocerende ideeën, eerlijk debat en gesprekken die de techpers niet drukt." },
+  "AI & Future of Work": { en: "Jobs, skills and the economy are being rewritten in real time. This is where smart professionals get ahead of the curve — not behind it.", nl: "Banen, vaardigheden en de economie worden herschreven. Hier blijven slimme professionals voorlopen op de curve — niet erachter." },
+  "Machine Learning Day": { en: "From theory to deployment: a deep-dive day for practitioners who want to build better models, faster pipelines and smarter systems.", nl: "Van theorie naar implementatie: een verdiepingsdag voor beoefenaars die betere modellen, snellere pipelines en slimmere systemen willen bouwen." },
+  "ChatGPT Workshop":   { en: "Hands-on. Practical. No buzzwords. Walk away knowing exactly how to apply large language models to your actual workflow — today.", nl: "Hands-on. Praktisch. Geen buzzwords. Vertrek met exacte kennis van hoe je grote taalmodellen toepast in je dagelijkse workflow — vanaf vandaag." },
+  "Robotics Expo":      { en: "See tomorrow's machines — today. From surgical robots to autonomous vehicles, the innovations on show here are already changing the world.", nl: "Zie de machines van morgen — vandaag. Van chirurgische robots tot autonome voertuigen, de innovaties hier veranderen de wereld al." },
+};
+
 function getCountdown(dateStr: string, tr: { today: string; tomorrow: string; pastEvent: string; daysAway: string }): string {
   const eventDate = new Date(dateStr);
   const today = new Date();
@@ -608,7 +657,7 @@ export default function Home() {
               <button key={cat} onClick={() => setActiveFilter(cat)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200
                   ${activeFilter === cat ? FILTER_ACTIVE : FILTER_INACTIVE}`}>
-                {cat} <span className="opacity-60 text-xs">({count})</span>
+                {CATEGORY_LABELS[cat][lang]} <span className="opacity-60 text-xs">({count})</span>
               </button>
             );
           })}
@@ -677,7 +726,7 @@ export default function Home() {
                   {/* Badges */}
                   <div className="flex items-center gap-2 mb-3 flex-wrap">
                     <span className={`text-xs px-2 py-1 rounded-full font-medium ${CATEGORY_COLORS[event.category]}`}>
-                      {event.category}
+                      {CATEGORY_LABELS[event.category][lang]}
                     </span>
                     {trendingIds.has(event.id) && (
                       <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 font-medium animate-pulse">
@@ -706,6 +755,11 @@ export default function Home() {
                   </div>
 
                   <p className="text-gray-300 mb-1">{event.artist}</p>
+                  {EVENT_DESCRIPTION[event.title] && (
+                    <p className="text-gray-500 text-xs mb-2 leading-relaxed line-clamp-2">
+                      {EVENT_DESCRIPTION[event.title][lang]}
+                    </p>
+                  )}
                   <p className="text-gray-400 text-sm mb-1">📍 {event.location}</p>
                   <p className="text-gray-400 text-sm mb-1">📅 {event.date} &nbsp; 🕐 {event.time}</p>
                   <p className="text-blue-300 text-xs mb-1 font-medium">⏳ {getCountdown(event.date, tr)}</p>

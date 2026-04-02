@@ -75,7 +75,7 @@ const EVENT_IMAGE: Record<string, string> = {
   "Wine & Dine Evening":   "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=600&q=80",
   "Food Festival":         "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&q=80",
   "Chef's Table":          "https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=600&q=80",
-  "Neon Rave":             "https://images.unsplash.com/photo-1598387993441-a364f854cfd1?w=600&q=80",
+  "Neon Rave":             "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=600&q=80",
   // AI
   "AI Talk":               "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=600&q=80",
   "AI & Future of Work":   "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80",

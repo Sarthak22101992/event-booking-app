@@ -331,7 +331,8 @@ export default function Home() {
       search === "" ||
       e.title.toLowerCase().includes(search.toLowerCase()) ||
       e.artist.toLowerCase().includes(search.toLowerCase()) ||
-      e.location.toLowerCase().includes(search.toLowerCase())
+      e.location.toLowerCase().includes(search.toLowerCase()) ||
+      e.category.toLowerCase().includes(search.toLowerCase())
     )
     .sort((a, b) => {
       if (sortBy === "price-asc")  return parsePrice(a.price) - parsePrice(b.price);

@@ -7,86 +7,77 @@ import PaymentModal from "@/components/PaymentModal";
 import { useLang } from "@/lib/LanguageContext";
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Music:    "bg-purple-500/20 text-purple-300 border border-purple-500/30",
-  Tech:     "bg-blue-500/20 text-blue-300 border border-blue-500/30",
-  Business: "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30",
-  Sports:   "bg-green-500/20 text-green-300 border border-green-500/30",
-  Comedy:   "bg-orange-500/20 text-orange-300 border border-orange-500/30",
-  Food:     "bg-pink-500/20 text-pink-300 border border-pink-500/30",
-  AI:       "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30",
+  Music:         "bg-purple-500/20 text-purple-300 border border-purple-500/30",
+  Tech:          "bg-blue-500/20 text-blue-300 border border-blue-500/30",
+  Business:      "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30",
+  Sports:        "bg-green-500/20 text-green-300 border border-green-500/30",
+  Comedy:        "bg-orange-500/20 text-orange-300 border border-orange-500/30",
+  Food:          "bg-pink-500/20 text-pink-300 border border-pink-500/30",
+  AI:            "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30",
+  Arts:          "bg-rose-500/20 text-rose-300 border border-rose-500/30",
+  Wellness:      "bg-teal-500/20 text-teal-300 border border-teal-500/30",
+  Fashion:       "bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30",
+  Film:          "bg-amber-500/20 text-amber-300 border border-amber-500/30",
+  Education:     "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30",
+  Gaming:        "bg-lime-500/20 text-lime-300 border border-lime-500/30",
+  Travel:        "bg-sky-500/20 text-sky-300 border border-sky-500/30",
 };
 
 const CATEGORY_ACCENT: Record<string, string> = {
-  Music:    "#a855f7",
-  Tech:     "#3b82f6",
-  Business: "#eab308",
-  Sports:   "#22c55e",
-  Comedy:   "#f97316",
-  Food:     "#ec4899",
-  AI:       "#06b6d4",
+  Music:     "#a855f7",
+  Tech:      "#3b82f6",
+  Business:  "#eab308",
+  Sports:    "#22c55e",
+  Comedy:    "#f97316",
+  Food:      "#ec4899",
+  AI:        "#06b6d4",
+  Arts:      "#f43f5e",
+  Wellness:  "#14b8a6",
+  Fashion:   "#d946ef",
+  Film:      "#f59e0b",
+  Education: "#6366f1",
+  Gaming:    "#84cc16",
+  Travel:    "#0ea5e9",
 };
 
 const CATEGORY_EMOJI: Record<string, string> = {
-  Music:    "🎵",
-  Tech:     "💻",
-  Business: "💼",
-  Sports:   "🏆",
-  Comedy:   "😂",
-  Food:     "🍽️",
-  AI:       "🤖",
+  Music:     "🎵",
+  Tech:      "💻",
+  Business:  "💼",
+  Sports:    "🏆",
+  Comedy:    "😂",
+  Food:      "🍽️",
+  AI:        "🤖",
+  Arts:      "🎨",
+  Wellness:  "🧘",
+  Fashion:   "👗",
+  Film:      "🎬",
+  Education: "📚",
+  Gaming:    "🎮",
+  Travel:    "✈️",
 };
 
 const CATEGORY_IMAGE: Record<string, string> = {
-  Music:    "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80",
-  Tech:     "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80",
-  Business: "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=600&q=80",
-  Sports:   "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&q=80",
-  Comedy:   "https://images.unsplash.com/photo-1527224857830-43a7acc85260?w=600&q=80",
-  Food:     "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80",
-  AI:       "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&q=80",
+  Music:     "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600&q=80",
+  Tech:      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&q=80",
+  Business:  "https://images.unsplash.com/photo-1556761175-4b46a572b786?w=600&q=80",
+  Sports:    "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&q=80",
+  Comedy:    "https://images.unsplash.com/photo-1527224857830-43a7acc85260?w=600&q=80",
+  Food:      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80",
+  AI:        "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&q=80",
+  Arts:      "https://images.unsplash.com/photo-1541367777708-7905fe3296c0?w=600&q=80",
+  Wellness:  "https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=600&q=80",
+  Fashion:   "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80",
+  Film:      "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600&q=80",
+  Education: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&q=80",
+  Gaming:    "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80",
+  Travel:    "https://images.unsplash.com/photo-1488085061387-422e29b40080?w=600&q=80",
 };
 
-const EVENT_IMAGE: Record<string, string> = {
-  // Music
-  "DJ Night":              "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&q=80",
-  "Live Band":             "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600&q=80",
-  "Jazz Evening":          "https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=600&q=80",
-  "Classical Night":       "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=600&q=80",
-  "EDM Festival":          "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=600&q=80",
-  "Hip Hop Night":         "https://images.unsplash.com/photo-1493676304819-0d7a8d026dcf?w=600&q=80",
-  // Tech
-  "Web3 Summit":           "https://images.unsplash.com/photo-1639762681057-408e52192e55?w=600&q=80",
-  "Startup Pitch":         "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&q=80",
-  "Dev Conference":        "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80",
-  "Cloud Summit":          "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&q=80",
-  // Business
-  "Leadership Forum":      "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600&q=80",
-  "Networking Night":      "https://images.unsplash.com/photo-1511578314322-379afb476865?w=600&q=80",
-  "Investment Summit":     "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&q=80",
-  // Sports
-  "F1 Watch Party":        "https://images.unsplash.com/photo-1504707748692-419802cf939d?w=600&q=80",
-  "Football Match":        "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600&q=80",
-  "Marathon":              "https://images.unsplash.com/photo-1530549387789-4c1017266635?w=600&q=80",
-  // Comedy
-  "Stand-Up Night":        "https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=600&q=80",
-  "Roast Night":           "https://images.unsplash.com/photo-1567593810070-7a3d471af022?w=600&q=80",
-  "Improv Show":           "https://images.unsplash.com/photo-1595769816263-9b910be24d5f?w=600&q=80",
-  // Food
-  "Wine & Dine Evening":   "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=600&q=80",
-  "Food Festival":         "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&q=80",
-  "Chef's Table":          "https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=600&q=80",
-  "Neon Rave":             "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=600&q=80",
-  // AI
-  "AI Talk":               "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=600&q=80",
-  "AI & Future of Work":   "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80",
-  "Machine Learning Day":  "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=600&q=80",
-  "ChatGPT Workshop":      "https://images.unsplash.com/photo-1684369176170-463e84248b70?w=600&q=80",
-  "Robotics Expo":         "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&q=80",
-};
 
 const FILTER_ACTIVE   = "bg-blue-600 text-white";
 const FILTER_INACTIVE = "bg-white/10 text-gray-300 hover:bg-white/20";
-const CATEGORIES      = ["All", "Music", "Tech", "Business", "Sports", "Comedy", "Food", "AI"];
+const CATEGORIES      = ["All", "Music", "Tech", "Business", "Sports", "Comedy", "Food", "AI", "Arts", "Wellness", "Fashion", "Film", "Education", "Gaming", "Travel"];
 
 const CATEGORY_LABELS: Record<string, { en: string; nl: string }> = {
   All:      { en: "All",      nl: "Alles"    },
@@ -94,9 +85,16 @@ const CATEGORY_LABELS: Record<string, { en: string; nl: string }> = {
   Tech:     { en: "Tech",     nl: "Tech"     },
   Business: { en: "Business", nl: "Business" },
   Sports:   { en: "Sports",   nl: "Sport"    },
-  Comedy:   { en: "Comedy",   nl: "Comedy"   },
-  Food:     { en: "Food",     nl: "Eten"     },
-  AI:       { en: "AI",       nl: "AI"       },
+  Comedy:    { en: "Comedy",    nl: "Comedy"      },
+  Food:      { en: "Food",      nl: "Eten"        },
+  AI:        { en: "AI",        nl: "AI"          },
+  Arts:      { en: "Arts",      nl: "Kunst"       },
+  Wellness:  { en: "Wellness",  nl: "Welzijn"     },
+  Fashion:   { en: "Fashion",   nl: "Mode"        },
+  Film:      { en: "Film",      nl: "Film"        },
+  Education: { en: "Education", nl: "Educatie"    },
+  Gaming:    { en: "Gaming",    nl: "Gaming"      },
+  Travel:    { en: "Travel",    nl: "Reizen"      },
 };
 
 const EVENT_DESCRIPTION: Record<string, { en: string; nl: string }> = {
@@ -224,6 +222,7 @@ type Event = {
   time: string;
   location: string;
   category: string;
+  image_url: string | null;
 };
 
 export default function Home() {
@@ -285,7 +284,7 @@ export default function Home() {
         const mapped = data.map((e) => ({
           id: e.id, title: e.title, artist: e.artist, price: e.price,
           seats: e.seats, maxSeats: e.max_seats, date: e.date, time: e.time,
-          location: e.location, category: e.category,
+          location: e.location, category: e.category, image_url: e.image_url ?? null,
         }));
         setEvents(mapped);
 
@@ -703,9 +702,10 @@ export default function Home() {
                 {/* Image Banner */}
                 <div className="relative h-44 overflow-hidden">
                   <img
-                    src={EVENT_IMAGE[event.title] ?? CATEGORY_IMAGE[event.category]}
+                    src={event.image_url ?? CATEGORY_IMAGE[event.category]}
                     alt={event.title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    onError={(e) => { (e.target as HTMLImageElement).src = CATEGORY_IMAGE[event.category]; }}
                   />
                   {/* Gradient overlay */}
                   <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)" }} />
